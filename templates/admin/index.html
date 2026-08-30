@@ -1,0 +1,328 @@
+{% extends "admin/index.html" %}
+{% load i18n static %}
+
+{% block extrastyle %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'admin/css/dashboard.css' %}">
+<style>
+  .portal-admin-dash { margin-bottom: 24px; }
+  .portal-stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 24px; }
+  .portal-stat-card { background: var(--body-bg, #fff); border: 1px solid var(--hairline-color, #e8e8e8); border-radius: 8px; padding: 14px 16px; }
+  .portal-stat-card .value { font-size: 22px; font-weight: 700; color: var(--accent, #417690); }
+  .portal-stat-card .label { font-size: 12px; color: var(--body-quiet-color, #999); text-transform: uppercase; letter-spacing: .03em; }
+  .portal-section { background: var(--body-bg, #fff); border: 1px solid var(--hairline-color, #e8e8e8); border-radius: 8px; margin-bottom: 20px; overflow: hidden; }
+  .portal-section h2 { margin: 0; padding: 10px 16px; font-size: 14px; font-weight: 600; background: var(--darkened-bg, #f8f8f8); border-bottom: 1px solid var(--hairline-color, #e8e8e8); }
+  .portal-section h2 .count { font-weight: 400; color: var(--body-quiet-color, #999); margin-left: 6px; }
+  .portal-table-wrap { overflow-x: auto; }
+  table.portal-table { width: 100%; border-collapse: collapse; }
+  table.portal-table th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .03em; color: var(--body-quiet-color, #999); padding: 8px 12px; border-bottom: 1px solid var(--hairline-color, #e8e8e8); white-space: nowrap; }
+  table.portal-table td { padding: 9px 12px; font-size: 13px; border-bottom: 1px solid var(--hairline-color, #e8e8e8); vertical-align: middle; }
+  table.portal-table tr:last-child td { border-bottom: none; }
+  table.portal-table tr:hover td { background: var(--darkened-bg, #f8f8f8); }
+  .portal-empty { color: var(--body-quiet-color, #999); padding: 18px 16px; font-size: 13px; }
+  .portal-badge { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+  .portal-badge-success { background: #d1fae5; color: #065f46; }
+  .portal-badge-danger { background: #fee2e2; color: #991b1b; }
+  .portal-badge-warning { background: #fef3c7; color: #92400e; }
+  .portal-badge-info { background: #dbeafe; color: #1e40af; }
+  .portal-badge-secondary { background: #e2e8f0; color: #475569; }
+  .portal-manage { float: right; font-size: 12px; font-weight: 400; margin-top: 2px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+  {% if is_superuser %}
+  <div class="portal-admin-dash">
+    <!-- Recent notifications -->
+    <div class="portal-section">
+      <h2>{% trans "Recent Notifications" %}{% if unread_notifications_count %}<span class="count">({{ unread_notifications_count }} unread)</span>{% endif %}<a class="portal-manage" href="{% url 'admin:notifications_notification_changelist' %}">View all in admin</a></h2>
+      <div style="padding: 8px 16px;">
+        {% if recent_notifications %}
+          {% for n in recent_notifications %}
+          <div style="display: flex; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--hairline-color, #e8e8e8);">
+            <span style="margin-top: 5px;">{% if n.is_read %}<span class="portal-badge portal-badge-secondary">read</span>{% else %}<span class="portal-badge portal-badge-danger">new</span>{% endif %}</span>
+            <div style="flex: 1; min-width: 0;">
+              <strong style="font-size: 13px;">{{ n.title }}</strong>
+              <div style="color: var(--body-quiet-color, #999); font-size: 12px;">{{ n.message|truncatechars:130 }}</div>
+            </div>
+            <span style="color: var(--body-quiet-color, #999); font-size: 12px; white-space: nowrap;">{{ n.created_at|date:"M d, H:i" }}</span>
+          </div>
+          {% endfor %}
+        {% else %}
+          <div class="portal-empty">No notifications yet. They'll appear here when students apply or recruiters post jobs.</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Stat cards -->
+    <div class="portal-stat-grid">
+      <div class="portal-stat-card"><div class="value">{{ total_users }}</div><div class="label">Total Users</div></div>
+      <div class="portal-stat-card"><div class="value">{{ total_students }}</div><div class="label">Students</div></div>
+      <div class="portal-stat-card"><div class="value">{{ total_recruiters }}</div><div class="label">Recruiters</div></div>
+      <div class="portal-stat-card"><div class="value">{{ total_companies }}</div><div class="label">Companies</div></div>
+      <div class="portal-stat-card"><div class="value">{{ total_jobs }}</div><div class="label">Jobs</div></div>
+      <div class="portal-stat-card"><div class="value">{{ total_internships }}</div><div class="label">Internships</div></div>
+      <div class="portal-stat-card"><div class="value">{{ total_applications }}</div><div class="label">Applications</div></div>
+      <div class="portal-stat-card"><div class="value">{{ total_career_paths }}</div><div class="label">Career Paths</div></div>
+      <div class="portal-stat-card"><div class="value">{{ total_milestones }}</div><div class="label">Milestones</div></div>
+      <div class="portal-stat-card"><div class="value">{{ total_interview_questions }}</div><div class="label">Interview Qs</div></div>
+      <div class="portal-stat-card"><div class="value">{{ total_resources }}</div><div class="label">Resources</div></div>
+    </div>
+
+    <!-- Search -->
+    <div class="portal-section" style="padding: 12px 16px;">
+      <form method="get" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+        <input type="text" name="q" value="{{ query }}" placeholder="Search students, recruiters, jobs, internships, applications, companies..."
+               style="flex: 1 1 320px; padding: 6px 10px; border: 1px solid var(--border-color, #ccc); border-radius: 4px;">
+        <button type="submit" class="button" style="padding: 6px 14px;">Search</button>
+        {% if query %}<a href="{% url 'admin:index' %}" style="padding: 6px 10px;">Clear</a>{% endif %}
+        {% if query %}<span style="color: var(--body-quiet-color, #999); font-size: 12px;">Showing results for "{{ query }}"</span>{% endif %}
+      </form>
+    </div>
+
+    <!-- Students -->
+    <div class="portal-section">
+      <h2>{% trans "All Students" %}<span class="count">({{ students.count }})</span><a class="portal-manage" href="{% url 'admin:students_studentprofile_changelist' %}">Manage in admin</a></h2>
+      <div class="portal-table-wrap">
+        <table class="portal-table">
+          <thead><tr><th>User</th><th>Skills</th><th>Education</th><th>Experience</th><th>Joined</th></tr></thead>
+          <tbody>
+            {% for s in students %}
+            <tr>
+              <td><strong>{{ s.user.get_full_name|default:s.user.username }}</strong><br><span style="color: var(--body-quiet-color, #999); font-size: 12px;">{{ s.user.email }}</span></td>
+              <td>{% for skill in s.skills.all|slice:":4" %}<span class="portal-badge portal-badge-info">{{ skill.name }}</span> {% endfor %}{% if s.skills.count > 4 %}<span style="color: var(--body-quiet-color, #999); font-size: 12px;">+{{ s.skills.count|add:"-4" }}</span>{% endif %}</td>
+              <td style="color: var(--body-quiet-color, #999);">{% if s.education %}{{ s.education|truncatechars:40 }}{% else %}—{% endif %}</td>
+              <td style="color: var(--body-quiet-color, #999);">{% if s.experience %}{{ s.experience|truncatechars:40 }}{% else %}—{% endif %}</td>
+              <td style="color: var(--body-quiet-color, #999); white-space: nowrap;">{{ s.user.date_joined|date:"M d, Y" }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5" class="portal-empty">No students found{% if query %} matching "{{ query }}"{% endif %}.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Recruiters -->
+    <div class="portal-section">
+      <h2>{% trans "All Recruiters" %}<span class="count">({{ recruiters.count }})</span><a class="portal-manage" href="{% url 'admin:recruiters_recruiterprofile_changelist' %}">Manage in admin</a></h2>
+      <div class="portal-table-wrap">
+        <table class="portal-table">
+          <thead><tr><th>User</th><th>Company</th><th>Designation</th><th>Joined</th></tr></thead>
+          <tbody>
+            {% for r in recruiters %}
+            <tr>
+              <td><strong>{{ r.user.get_full_name|default:r.user.username }}</strong><br><span style="color: var(--body-quiet-color, #999); font-size: 12px;">{{ r.user.email }}</span></td>
+              <td>{% if r.company %}{{ r.company.name }}{% else %}—{% endif %}</td>
+              <td><span class="portal-badge portal-badge-secondary">{{ r.designation|default:"—" }}</span></td>
+              <td style="color: var(--body-quiet-color, #999); white-space: nowrap;">{{ r.user.date_joined|date:"M d, Y" }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4" class="portal-empty">No recruiters found{% if query %} matching "{{ query }}"{% endif %}.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Jobs -->
+    <div class="portal-section">
+      <h2>{% trans "All Jobs" %}<span class="count">({{ jobs.count }})</span><a class="portal-manage" href="{% url 'admin:jobs_job_changelist' %}">Manage in admin</a></h2>
+      <div class="portal-table-wrap">
+        <table class="portal-table">
+          <thead><tr><th>Title</th><th>Company</th><th>Location</th><th>Type</th><th>Applications</th><th>Status</th></tr></thead>
+          <tbody>
+            {% for j in jobs %}
+            <tr>
+              <td><strong>{{ j.title }}</strong></td>
+              <td>{{ j.company.name }}</td>
+              <td style="color: var(--body-quiet-color, #999);">{{ j.location }}</td>
+              <td><span class="portal-badge portal-badge-secondary">{{ j.job_type }}</span></td>
+              <td>{{ j.applications_count }}</td>
+              <td>{% if j.is_active %}<span class="portal-badge portal-badge-success">Active</span>{% else %}<span class="portal-badge portal-badge-secondary">Closed</span>{% endif %}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="6" class="portal-empty">No jobs found{% if query %} matching "{{ query }}"{% endif %}.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Internships -->
+    <div class="portal-section">
+      <h2>{% trans "All Internships" %}<span class="count">({{ internships.count }})</span><a class="portal-manage" href="{% url 'admin:internships_internship_changelist' %}">Manage in admin</a></h2>
+      <div class="portal-table-wrap">
+        <table class="portal-table">
+          <thead><tr><th>Title</th><th>Company</th><th>Location</th><th>Type</th><th>Stipend</th><th>Status</th></tr></thead>
+          <tbody>
+            {% for i in internships %}
+            <tr>
+              <td><strong>{{ i.title }}</strong></td>
+              <td>{{ i.company.name }}</td>
+              <td style="color: var(--body-quiet-color, #999);">{{ i.location }}</td>
+              <td><span class="portal-badge portal-badge-secondary">{{ i.internship_type }}</span></td>
+              <td style="color: var(--body-quiet-color, #999);">{{ i.stipend|default:"—" }}</td>
+              <td>{% if i.is_active %}<span class="portal-badge portal-badge-success">Active</span>{% else %}<span class="portal-badge portal-badge-secondary">Closed</span>{% endif %}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="6" class="portal-empty">No internships found{% if query %} matching "{{ query }}"{% endif %}.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Applications -->
+    <div class="portal-section">
+      <h2>{% trans "All Applications" %}<span class="count">({{ applications.count }})</span><a class="portal-manage" href="{% url 'admin:applications_application_changelist' %}">Manage in admin</a></h2>
+      <div class="portal-table-wrap">
+        <table class="portal-table">
+          <thead><tr><th>Student</th><th>Position</th><th>Type</th><th>Status</th><th>Applied</th></tr></thead>
+          <tbody>
+            {% for a in applications %}
+            <tr>
+              <td><strong>{{ a.student.get_full_name|default:a.student.username }}</strong><br><span style="color: var(--body-quiet-color, #999); font-size: 12px;">{{ a.student.email }}</span></td>
+              <td>{% if a.job %}{{ a.job.title }}{% elif a.internship %}{{ a.internship.title }}{% else %}—{% endif %}</td>
+              <td><span class="portal-badge portal-badge-secondary">{% if a.job %}Job{% else %}Internship{% endif %}</span></td>
+              <td>
+                {% if a.status == 'Accepted' %}<span class="portal-badge portal-badge-success">{{ a.status }}</span>
+                {% elif a.status == 'Rejected' %}<span class="portal-badge portal-badge-danger">{{ a.status }}</span>
+                {% elif a.status == 'Shortlisted' %}<span class="portal-badge portal-badge-warning">{{ a.status }}</span>
+                {% else %}<span class="portal-badge portal-badge-info">{{ a.status }}</span>{% endif %}
+              </td>
+              <td style="color: var(--body-quiet-color, #999); white-space: nowrap;">{{ a.applied_at|date:"M d, Y" }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5" class="portal-empty">No applications found{% if query %} matching "{{ query }}"{% endif %}.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Companies -->
+    <div class="portal-section">
+      <h2>{% trans "All Companies" %}<span class="count">({{ companies.count }})</span><a class="portal-manage" href="{% url 'admin:recruiters_company_changelist' %}">Manage in admin</a></h2>
+      <div class="portal-table-wrap">
+        <table class="portal-table">
+          <thead><tr><th>Company</th><th>Industry</th><th>Size</th><th>Location</th><th>Recruiters</th></tr></thead>
+          <tbody>
+            {% for c in companies %}
+            <tr>
+              <td><strong>{{ c.name }}</strong></td>
+              <td style="color: var(--body-quiet-color, #999);">{{ c.industry|default:"—" }}</td>
+              <td style="color: var(--body-quiet-color, #999);">{{ c.size|default:"—" }}</td>
+              <td style="color: var(--body-quiet-color, #999);">{{ c.location|default:"—" }}</td>
+              <td>{{ c.recruiter_count }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5" class="portal-empty">No companies found{% if query %} matching "{{ query }}"{% endif %}.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Career Paths -->
+    <div class="portal-section">
+      <h2>{% trans "All Career Paths" %}<span class="count">({{ career_paths.count }})</span><a class="portal-manage" href="{% url 'admin:careers_careerpath_changelist' %}">Manage in admin</a></h2>
+      <div class="portal-table-wrap">
+        <table class="portal-table">
+          <thead><tr><th>Path</th><th>Salary Range</th><th>Growth</th><th>Milestones</th><th>Status</th></tr></thead>
+          <tbody>
+            {% for p in career_paths %}
+            <tr>
+              <td><strong>{{ p.name }}</strong></td>
+              <td style="color: var(--body-quiet-color, #999);">${{ p.avg_salary_min }} - ${{ p.avg_salary_max }}</td>
+              <td><span class="portal-badge portal-badge-success">{{ p.growth_outlook|default:"—" }}</span></td>
+              <td>{{ p.milestones_count }}</td>
+              <td>{% if p.is_active %}<span class="portal-badge portal-badge-success">Active</span>{% else %}<span class="portal-badge portal-badge-secondary">Inactive</span>{% endif %}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5" class="portal-empty">No career paths found{% if query %} matching "{{ query }}"{% endif %}.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Career Milestones -->
+    <div class="portal-section">
+      <h2>{% trans "All Career Milestones" %}<span class="count">({{ milestones.count }})</span><a class="portal-manage" href="{% url 'admin:careers_careerpathmilestone_changelist' %}">Manage in admin</a></h2>
+      <div class="portal-table-wrap">
+        <table class="portal-table">
+          <thead><tr><th>Title</th><th>Career Path</th><th>Level</th><th>Experience</th><th>Salary</th></tr></thead>
+          <tbody>
+            {% for m in milestones %}
+            <tr>
+              <td><strong>{{ m.title }}</strong></td>
+              <td style="color: var(--body-quiet-color, #999);">{{ m.career_path.name }}</td>
+              <td><span class="portal-badge portal-badge-info">{{ m.get_level_display }}</span></td>
+              <td style="color: var(--body-quiet-color, #999);">{{ m.experience_years }}</td>
+              <td style="color: var(--body-quiet-color, #999);">{{ m.salary_range|default:"—" }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5" class="portal-empty">No milestones found{% if query %} matching "{{ query }}"{% endif %}.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Interview Questions -->
+    <div class="portal-section">
+      <h2>{% trans "All Interview Questions" %}<span class="count">({{ interview_questions.count }})</span><a class="portal-manage" href="{% url 'admin:careers_interviewquestion_changelist' %}">Manage in admin</a></h2>
+      <div class="portal-table-wrap">
+        <table class="portal-table">
+          <thead><tr><th>Question</th><th>Skill</th><th>Career Path</th><th>Difficulty</th><th>Type</th></tr></thead>
+          <tbody>
+            {% for q in interview_questions %}
+            <tr>
+              <td style="max-width: 320px;">{{ q.question|truncatechars:80 }}</td>
+              <td><span class="portal-badge portal-badge-info">{{ q.skill.name }}</span></td>
+              <td style="color: var(--body-quiet-color, #999);">{% if q.career_path %}{{ q.career_path.name }}{% else %}—{% endif %}</td>
+              <td>
+                {% if q.difficulty == 'advanced' %}<span class="portal-badge portal-badge-danger">{{ q.get_difficulty_display }}</span>
+                {% elif q.difficulty == 'intermediate' %}<span class="portal-badge portal-badge-warning">{{ q.get_difficulty_display }}</span>
+                {% else %}<span class="portal-badge portal-badge-success">{{ q.get_difficulty_display }}</span>{% endif %}
+              </td>
+              <td><span class="portal-badge portal-badge-secondary">{% if q.is_behavioral %}Behavioral{% else %}Technical{% endif %}</span></td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5" class="portal-empty">No interview questions found{% if query %} matching "{{ query }}"{% endif %}.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Learning Resources -->
+    <div class="portal-section">
+      <h2>{% trans "All Learning Resources" %}<span class="count">({{ learning_resources.count }})</span><a class="portal-manage" href="{% url 'admin:careers_skillresource_changelist' %}">Manage in admin</a></h2>
+      <div class="portal-table-wrap">
+        <table class="portal-table">
+          <thead><tr><th>Title</th><th>Skill</th><th>Type</th><th>Difficulty</th><th>Free</th></tr></thead>
+          <tbody>
+            {% for r in learning_resources %}
+            <tr>
+              <td><a href="{{ r.url }}" target="_blank" rel="noopener">{{ r.title|truncatechars:60 }}</a></td>
+              <td><span class="portal-badge portal-badge-info">{{ r.skill.name }}</span></td>
+              <td style="color: var(--body-quiet-color, #999);">{{ r.get_resource_type_display }}</td>
+              <td><span class="portal-badge portal-badge-secondary">{{ r.get_difficulty_display }}</span></td>
+              <td>{% if r.is_free %}<span class="portal-badge portal-badge-success">Free</span>{% else %}<span class="portal-badge portal-badge-secondary">Paid</span>{% endif %}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5" class="portal-empty">No learning resources found{% if query %} matching "{{ query }}"{% endif %}.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  {% include "admin/app_list.html" with app_list=app_list show_changelinks=True %}
+</div>
+{% endblock %}

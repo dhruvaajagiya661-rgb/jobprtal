@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin People Dashboard | PortAL</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { background: #f1f5f9; font-family: 'Inter', sans-serif; }
+        .topbar { background: #0f172a; color: #fff; }
+        .topbar a { color: #cbd5e1; text-decoration: none; font-size: .85rem; font-weight: 500; }
+        .topbar a:hover { color: #fff; }
+        .admin-dash-header { background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%); border-radius: 1rem; color: #fff; padding: 2rem 2.5rem; position: relative; overflow: hidden; }
+        .admin-dash-header::after { content: ''; position: absolute; right: -60px; top: -60px; width: 220px; height: 220px; border-radius: 50%; background: rgba(255,255,255,.06); }
+        .stat-card { border: none; border-radius: 1rem; box-shadow: 0 4px 20px rgba(15,23,42,.06); transition: transform .2s ease, box-shadow .2s ease; }
+        .stat-card:hover { transform: translateY(-4px); box-shadow: 0 10px 30px rgba(15,23,42,.12); }
+        .stat-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; }
+        .table thead th { font-size: .72rem; text-transform: uppercase; letter-spacing: .04em; color: #64748b; border-bottom-width: 1px; }
+        .table td { vertical-align: middle; font-size: .85rem; }
+        .skill-badge { background: #eef2ff; color: #4338ca; border-radius: 999px; padding: .15rem .6rem; font-size: .72rem; font-weight: 600; }
+        .search-card { background: #fff; border-radius: 1rem; box-shadow: 0 4px 20px rgba(15,23,42,.06); }
+        .section-card { border: none; border-radius: 1rem; box-shadow: 0 4px 20px rgba(15,23,42,.06); overflow: hidden; }
+        .section-card .card-header { background: #fff; border-bottom: 1px solid #eef2f7; padding: 1.1rem 1.4rem; }
+        .count-pill { background: #0f172a; color: #fff; border-radius: 999px; padding: .15rem .7rem; font-size: .75rem; font-weight: 700; }
+        .table-row-hover:hover { background: #f8fafc; }
+        .link-cell a { color: #2563eb; text-decoration: none; font-weight: 500; }
+        .link-cell a:hover { text-decoration: underline; }
+        .empty-state { color: #94a3b8; padding: 3rem 1rem; text-align: center; }
+        .empty-state i { font-size: 2.5rem; margin-bottom: .75rem; color: #cbd5e1; }
+        .notif-item { border-left: 3px solid transparent; transition: background .15s ease; }
+        .notif-item.unread { border-left-color: #2563eb; background: #f8fafc; }
+        .notif-item:hover { background: #f1f5f9; }
+    </style>
+</head>
+<body>
+
+    <!-- Top bar -->
+    <nav class="topbar py-2 px-3 d-flex justify-content-between align-items-center">
+        <div class="fw-bold"><i class="fas fa-shield-halved me-2"></i>PortAL Admin</div>
+        <div class="d-flex align-items-center gap-3">
+            <a href="{% url 'admin:index' %}"><i class="fas fa-database me-1"></i>Django Admin</a>
+            <a href="{% url 'admin_analytics' %}"><i class="fas fa-bolt me-1"></i>Live Analytics</a>
+            <form method="post" action="{% url 'admin:logout' %}" class="m-0">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm btn-outline-light px-3"><i class="fas fa-right-from-bracket me-1"></i>Logout</button>
+            </form>
+        </div>
+    </nav>
+
+    <div class="container-fluid py-4 px-lg-4">
+
+        <!-- Header -->
+        <div class="admin-dash-header mb-4">
+            <div class="d-flex flex-wrap justify-content-between align-items-center">
+                <div>
+                    <h3 class="fw-bold mb-1"><i class="fas fa-users-gear me-2"></i> Admin People Dashboard</h3>
+                    <p class="mb-0 text-white-50">Complete visibility of all students &amp; recruiters on PortAL</p>
+                </div>
+                <span class="badge rounded-pill text-bg-light px-3 py-2"><i class="fas fa-user me-1"></i>{{ total_users }} total users</span>
+            </div>
+        </div>
+
+        <!-- Recent notifications -->
+        <div class="section-card card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="fw-bold mb-0"><i class="fas fa-bell text-danger me-2"></i> Recent Notifications
+                    {% if unread_notifications_count %}<span class="badge text-bg-danger rounded-pill ms-2">{{ unread_notifications_count }} unread</span>{% endif %}</h5>
+                <a href="{% url 'admin:notifications_notification_changelist' %}" class="small text-primary text-decoration-none">View all in Django admin <i class="fas fa-arrow-right ms-1"></i></a>
+            </div>
+            <div class="card-body p-2">
+                {% if recent_notifications %}
+                    {% for n in recent_notifications %}
+                    <div class="d-flex align-items-start gap-3 px-3 py-2 notif-item {% if not n.is_read %}unread{% endif %}">
+                        <i class="fas fa-circle {% if n.is_read %}text-secondary-subtle{% else %}text-danger{% endif %} mt-2" style="font-size:.55rem;"></i>
+                        <div class="flex-grow-1">
+                            <div class="fw-semibold small {% if n.is_read %}text-muted{% else %}text-dark{% endif %}">{{ n.title }}</div>
+                            <div class="small text-muted">{{ n.message|truncatechars:120 }}</div>
+                        </div>
+                        <span class="text-muted small flex-shrink-0">{{ n.created_at|date:"M d, H:i" }}</span>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state py-4"><i class="fas fa-bell-slash"></i><div>No notifications yet. They'll appear here when students apply or recruiters post jobs.</div></div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Stat cards -->
+        <div class="row g-3 mb-4">
+            <div class="col-6 col-md-4 col-xl-2">
+                <div class="card stat-card p-3">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="stat-icon bg-primary-subtle text-primary"><i class="fas fa-graduation-cap"></i></div>
+                        <div><div class="text-muted small">Students</div><div class="fw-bold fs-4">{{ total_students }}</div></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-4 col-xl-2">
+                <div class="card stat-card p-3">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="stat-icon bg-success-subtle text-success"><i class="fas fa-user-tie"></i></div>
+                        <div><div class="text-muted small">Recruiters</div><div class="fw-bold fs-4">{{ total_recruiters }}</div></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-4 col-xl-2">
+                <div class="card stat-card p-3">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="stat-icon bg-warning-subtle text-warning"><i class="fas fa-building"></i></div>
+                        <div><div class="text-muted small">Companies</div><div class="fw-bold fs-4">{{ total_companies }}</div></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-4 col-xl-2">
+                <div class="card stat-card p-3">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="stat-icon bg-info-subtle text-info"><i class="fas fa-briefcase"></i></div>
+                        <div><div class="text-muted small">Jobs</div><div class="fw-bold fs-4">{{ total_jobs }}</div></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-4 col-xl-2">
+                <div class="card stat-card p-3">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="stat-icon bg-secondary-subtle text-secondary"><i class="fas fa-laptop-code"></i></div>
+                        <div><div class="text-muted small">Internships</div><div class="fw-bold fs-4">{{ total_internships }}</div></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-4 col-xl-2">
+                <div class="card stat-card p-3">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="stat-icon bg-danger-subtle text-danger"><i class="fas fa-file-signature"></i></div>
+                        <div><div class="text-muted small">Applications</div><div class="fw-bold fs-4">{{ total_applications }}</div></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-4 col-xl-2">
+                <div class="card stat-card p-3">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="stat-icon bg-primary-subtle text-primary"><i class="fas fa-route"></i></div>
+                        <div><div class="text-muted small">Career Paths</div><div class="fw-bold fs-4">{{ total_career_paths }}</div></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-4 col-xl-2">
+                <div class="card stat-card p-3">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="stat-icon bg-success-subtle text-success"><i class="fas fa-bullseye"></i></div>
+                        <div><div class="text-muted small">Milestones</div><div class="fw-bold fs-4">{{ total_milestones }}</div></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-4 col-xl-2">
+                <div class="card stat-card p-3">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="stat-icon bg-warning-subtle text-warning"><i class="fas fa-circle-question"></i></div>
+                        <div><div class="text-muted small">Interview Qs</div><div class="fw-bold fs-4">{{ total_interview_questions }}</div></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-4 col-xl-2">
+                <div class="card stat-card p-3">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="stat-icon bg-secondary-subtle text-secondary"><i class="fas fa-book-open"></i></div>
+                        <div><div class="text-muted small">Resources</div><div class="fw-bold fs-4">{{ total_resources }}</div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search -->
+        <div class="search-card p-3 mb-4">
+            <form method="get" class="d-flex flex-wrap gap-2 align-items-center">
+                <div class="input-group flex-grow-1" style="max-width: 460px;">
+                    <span class="input-group-text bg-white border-end-0"><i class="fas fa-magnifying-glass text-muted"></i></span>
+                    <input type="text" name="q" value="{{ query }}" class="form-control border-start-0" placeholder="Search by name, email, skill, company...">
+                </div>
+                <button class="btn btn-primary"><i class="fas fa-search me-1"></i> Search</button>
+                {% if query %}<a href="{% url 'admin_dashboard' %}" class="btn btn-outline-secondary"><i class="fas fa-xmark me-1"></i> Clear</a>{% endif %}
+                <span class="text-muted small ms-auto">
+                    {% if query %}Showing results for "<strong>{{ query }}</strong>" —{% endif %}
+                    {{ students.count }} students, {{ recruiters.count }} recruiters
+                </span>
+            </form>
+        </div>
+
+        <!-- Students table -->
+        <div class="section-card card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="fw-bold mb-0"><i class="fas fa-graduation-cap text-primary me-2"></i> All Students
+                    <span class="count-pill ms-2">{{ students.count }}</span></h5>
+                <a href="{% url 'admin:students_studentprofile_changelist' %}" class="small text-primary text-decoration-none">Manage in Django admin <i class="fas fa-arrow-right ms-1"></i></a>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th>User</th><th>Skills</th><th>Education</th><th>Experience</th>
+                            <th>Resume</th><th>Links</th><th>Joined</th><th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for s in students %}
+                        <tr class="table-row-hover">
+                            <td>
+                                <div class="fw-semibold">{{ s.user.get_full_name|default:s.user.username }}</div>
+                                <div class="small text-muted">{{ s.user.email }}</div>
+                                <span class="badge {% if s.user.is_active %}text-bg-success{% else %}text-bg-secondary{% endif %} rounded-pill" style="font-size:.65rem;">
+                                    {% if s.user.is_active %}Active{% else %}Inactive{% endif %}
+                                </span>
+                            </td>
+                            <td>
+                                {% if s.skills.all %}
+                                    {% for skill in s.skills.all|slice:":5" %}<span class="skill-badge">{{ skill.name }}</span> {% endfor %}
+                                    {% if s.skills.count > 5 %}<span class="text-muted small">+{{ s.skills.count|add:"-5" }}</span>{% endif %}
+                                {% else %}<span class="text-muted small">—</span>{% endif %}
+                            </td>
+                            <td class="small text-muted" style="max-width:200px;">
+                                {% if s.education %}<div class="text-truncate" title="{{ s.education }}">{{ s.education|truncatechars:60 }}</div>{% else %}—{% endif %}
+                            </td>
+                            <td class="small text-muted" style="max-width:200px;">
+                                {% if s.experience %}<div class="text-truncate" title="{{ s.experience }}">{{ s.experience|truncatechars:60 }}</div>{% else %}—{% endif %}
+                            </td>
+                            <td class="link-cell">
+                                {% if s.resume %}<a href="{{ s.resume.url }}" target="_blank"><i class="fas fa-file-pdf text-danger me-1"></i>View</a>{% else %}<span class="text-muted small">—</span>{% endif %}
+                            </td>
+                            <td class="link-cell">
+                                <div class="d-flex flex-column">
+                                    {% if s.portfolio_link %}<a href="{{ s.portfolio_link }}" target="_blank"><i class="fas fa-globe me-1"></i>Portfolio</a>{% endif %}
+                                    {% if s.github_link %}<a href="{{ s.github_link }}" target="_blank"><i class="fab fa-github me-1"></i>GitHub</a>{% elif s.github_username %}<a href="https://github.com/{{ s.github_username }}" target="_blank"><i class="fab fa-github me-1"></i>GitHub</a>{% endif %}
+                                    {% if s.linkedin_link %}<a href="{{ s.linkedin_link }}" target="_blank"><i class="fab fa-linkedin me-1"></i>LinkedIn</a>{% endif %}
+                                    {% if not s.portfolio_link and not s.github_link and not s.github_username and not s.linkedin_link %}<span class="text-muted small">—</span>{% endif %}
+                                </div>
+                            </td>
+                            <td class="small text-muted">{{ s.user.date_joined|date:"M d, Y" }}</td>
+                            <td class="link-cell text-end">
+                                <a href="{% url 'admin:students_studentprofile_change' s.pk %}" title="Edit" class="me-2"><i class="fas fa-pen-to-square"></i></a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="8">
+                            <div class="empty-state"><i class="fas fa-user-graduate"></i><div>No students found{% if query %} matching "{{ query }}"{% endif %}.</div></div>
+                        </td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Recruiters table -->
+        <div class="section-card card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="fw-bold mb-0"><i class="fas fa-user-tie text-success me-2"></i> All Recruiters
+                    <span class="count-pill ms-2">{{ recruiters.count }}</span></h5>
+                <a href="{% url 'admin:recruiters_recruiterprofile_changelist' %}" class="small text-primary text-decoration-none">Manage in Django admin <i class="fas fa-arrow-right ms-1"></i></a>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th>User</th><th>Company</th><th>Industry</th><th>Size</th><th>Location</th><th>Designation</th><th>Joined</th><th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in recruiters %}
+                        <tr class="table-row-hover">
+                            <td>
+                                <div class="fw-semibold">{{ r.user.get_full_name|default:r.user.username }}</div>
+                                <div class="small text-muted">{{ r.user.email }}</div>
+                                <span class="badge {% if r.user.is_active %}text-bg-success{% else %}text-bg-secondary{% endif %} rounded-pill" style="font-size:.65rem;">
+                                    {% if r.user.is_active %}Active{% else %}Inactive{% endif %}
+                                </span>
+                            </td>
+                            <td class="fw-semibold">
+                                {% if r.company %}
+                                    {{ r.company.name }}
+                                    {% if r.company.website %}<div class="link-cell small"><a href="{{ r.company.website }}" target="_blank"><i class="fas fa-up-right-from-square me-1"></i>Website</a></div>{% endif %}
+                                {% else %}<span class="text-muted small">No company</span>{% endif %}
+                            </td>
+                            <td class="small text-muted">{{ r.company.industry|default:"—" }}</td>
+                            <td class="small text-muted">{{ r.company.size|default:"—" }}</td>
+                            <td class="small text-muted">{{ r.company.location|default:"—" }}</td>
+                            <td><span class="skill-badge">{{ r.designation|default:"—" }}</span></td>
+                            <td class="small text-muted">{{ r.user.date_joined|date:"M d, Y" }}</td>
+                            <td class="link-cell text-end">
+                                <a href="{% url 'admin:recruiters_recruiterprofile_change' r.pk %}" title="Edit"><i class="fas fa-pen-to-square"></i></a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="8">
+                            <div class="empty-state"><i class="fas fa-user-tie"></i><div>No recruiters found{% if query %} matching "{{ query }}"{% endif %}.</div></div>
+                        </td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Jobs table -->
+        <div class="section-card card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="fw-bold mb-0"><i class="fas fa-briefcase text-info me-2"></i> All Jobs
+                    <span class="count-pill ms-2">{{ jobs.count }}</span></h5>
+                <a href="{% url 'admin:jobs_job_changelist' %}" class="small text-primary text-decoration-none">Manage in Django admin <i class="fas fa-arrow-right ms-1"></i></a>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th>Title</th><th>Company</th><th>Location</th><th>Type</th><th>Salary</th><th>Experience</th><th>Deadline</th><th>Applications</th><th>Status</th><th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for j in jobs %}
+                        <tr class="table-row-hover">
+                            <td><div class="fw-semibold">{{ j.title }}</div><div class="small text-muted">{% if j.category %}{{ j.category.name }}{% else %}—{% endif %}</div></td>
+                            <td class="fw-semibold">{{ j.company.name }}</td>
+                            <td class="small text-muted">{{ j.location }}</td>
+                            <td><span class="skill-badge">{{ j.job_type }}</span></td>
+                            <td class="small text-muted">{{ j.salary|default:"—" }}</td>
+                            <td class="small text-muted">{{ j.experience_required }}</td>
+                            <td class="small text-muted">{{ j.deadline|date:"M d, Y" }}</td>
+                            <td><span class="badge text-bg-primary rounded-pill">{{ j.applications_count }}</span></td>
+                            <td>
+                                <span class="badge {% if j.is_active %}text-bg-success{% else %}text-bg-secondary{% endif %} rounded-pill">
+                                    {% if j.is_active %}Active{% else %}Closed{% endif %}
+                                </span>
+                            </td>
+                            <td class="link-cell text-end">
+                                <a href="{% url 'admin:jobs_job_change' j.pk %}" title="Edit"><i class="fas fa-pen-to-square"></i></a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="10">
+                            <div class="empty-state"><i class="fas fa-briefcase"></i><div>No jobs found{% if query %} matching "{{ query }}"{% endif %}.</div></div>
+                        </td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Internships table -->
+        <div class="section-card card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="fw-bold mb-0"><i class="fas fa-laptop-code text-warning me-2"></i> All Internships
+                    <span class="count-pill ms-2">{{ internships.count }}</span></h5>
+                <a href="{% url 'admin:internships_internship_changelist' %}" class="small text-primary text-decoration-none">Manage in Django admin <i class="fas fa-arrow-right ms-1"></i></a>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th>Title</th><th>Company</th><th>Location</th><th>Type</th><th>Stipend</th><th>Duration</th><th>Deadline</th><th>Applications</th><th>Status</th><th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for i in internships %}
+                        <tr class="table-row-hover">
+                            <td><div class="fw-semibold">{{ i.title }}</div><div class="small text-muted">{% if i.category %}{{ i.category.name }}{% else %}—{% endif %}</div></td>
+                            <td class="fw-semibold">{{ i.company.name }}</td>
+                            <td class="small text-muted">{{ i.location }}</td>
+                            <td><span class="skill-badge">{{ i.internship_type }}</span></td>
+                            <td class="small text-muted">{{ i.stipend|default:"—" }}</td>
+                            <td class="small text-muted">{{ i.duration }}</td>
+                            <td class="small text-muted">{{ i.deadline|date:"M d, Y" }}</td>
+                            <td><span class="badge text-bg-primary rounded-pill">{{ i.applications_count }}</span></td>
+                            <td>
+                                <span class="badge {% if i.is_active %}text-bg-success{% else %}text-bg-secondary{% endif %} rounded-pill">
+                                    {% if i.is_active %}Active{% else %}Closed{% endif %}
+                                </span>
+                            </td>
+                            <td class="link-cell text-end">
+                                <a href="{% url 'admin:internships_internship_change' i.pk %}" title="Edit"><i class="fas fa-pen-to-square"></i></a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="10">
+                            <div class="empty-state"><i class="fas fa-laptop-code"></i><div>No internships found{% if query %} matching "{{ query }}"{% endif %}.</div></div>
+                        </td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Applications table -->
+        <div class="section-card card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="fw-bold mb-0"><i class="fas fa-file-signature text-danger me-2"></i> All Applications
+                    <span class="count-pill ms-2">{{ applications.count }}</span></h5>
+                <a href="{% url 'admin:applications_application_changelist' %}" class="small text-primary text-decoration-none">Manage in Django admin <i class="fas fa-arrow-right ms-1"></i></a>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th>Student</th><th>Position</th><th>Type</th><th>Status</th><th>Applied</th><th>Resume</th><th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for a in applications %}
+                        <tr class="table-row-hover">
+                            <td>
+                                <div class="fw-semibold">{{ a.student.get_full_name|default:a.student.username }}</div>
+                                <div class="small text-muted">{{ a.student.email }}</div>
+                            </td>
+                            <td class="fw-semibold">{% if a.job %}{{ a.job.title }}{% elif a.internship %}{{ a.internship.title }}{% else %}—{% endif %}</td>
+                            <td><span class="skill-badge">{% if a.job %}Job{% else %}Internship{% endif %}</span></td>
+                            <td>
+                                <span class="badge {% if a.status == 'Accepted' %}text-bg-success{% elif a.status == 'Rejected' %}text-bg-danger{% elif a.status == 'Shortlisted' %}text-bg-warning{% else %}text-bg-info{% endif %} rounded-pill">
+                                    {{ a.status }}
+                                </span>
+                            </td>
+                            <td class="small text-muted">{{ a.applied_at|date:"M d, Y" }}</td>
+                            <td class="link-cell">
+                                {% if a.resume %}<a href="{{ a.resume.url }}" target="_blank"><i class="fas fa-file-pdf text-danger me-1"></i>View</a>{% else %}<span class="text-muted small">—</span>{% endif %}
+                            </td>
+                            <td class="link-cell text-end">
+                                <a href="{% url 'admin:applications_application_change' a.pk %}" title="Edit"><i class="fas fa-pen-to-square"></i></a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="7">
+                            <div class="empty-state"><i class="fas fa-file-signature"></i><div>No applications found{% if query %} matching "{{ query }}"{% endif %}.</div></div>
+                        </td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Companies table -->
+        <div class="section-card card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="fw-bold mb-0"><i class="fas fa-building text-secondary me-2"></i> All Companies
+                    <span class="count-pill ms-2">{{ companies.count }}</span></h5>
+                <a href="{% url 'admin:recruiters_company_changelist' %}" class="small text-primary text-decoration-none">Manage in Django admin <i class="fas fa-arrow-right ms-1"></i></a>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th>Company</th><th>Industry</th><th>Size</th><th>Location</th><th>Recruiters</th><th>Website</th><th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for c in companies %}
+                        <tr class="table-row-hover">
+                            <td class="fw-semibold">
+                                {{ c.name }}
+                                {% if c.description %}<div class="small text-muted text-truncate" style="max-width:260px;" title="{{ c.description }}">{{ c.description|truncatechars:50 }}</div>{% endif %}
+                            </td>
+                            <td class="small text-muted">{{ c.industry|default:"—" }}</td>
+                            <td class="small text-muted">{{ c.size|default:"—" }}</td>
+                            <td class="small text-muted">{{ c.location|default:"—" }}</td>
+                            <td><span class="badge text-bg-secondary rounded-pill">{{ c.recruiter_count }}</span></td>
+                            <td class="link-cell">
+                                {% if c.website %}<a href="{{ c.website }}" target="_blank"><i class="fas fa-up-right-from-square me-1"></i>Website</a>{% else %}<span class="text-muted small">—</span>{% endif %}
+                            </td>
+                            <td class="link-cell text-end">
+                                <a href="{% url 'admin:recruiters_company_change' c.pk %}" title="Edit"><i class="fas fa-pen-to-square"></i></a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="7">
+                            <div class="empty-state"><i class="fas fa-building"></i><div>No companies found{% if query %} matching "{{ query }}"{% endif %}.</div></div>
+                        </td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Career Paths table -->
+        <div class="section-card card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="fw-bold mb-0"><i class="fas fa-route text-primary me-2"></i> All Career Paths
+                    <span class="count-pill ms-2">{{ career_paths.count }}</span></h5>
+                <a href="{% url 'admin:careers_careerpath_changelist' %}" class="small text-primary text-decoration-none">Manage in Django admin <i class="fas fa-arrow-right ms-1"></i></a>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th>Path</th><th>Salary Range</th><th>Growth</th><th>Milestones</th><th>Status</th><th>Created</th><th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for p in career_paths %}
+                        <tr class="table-row-hover">
+                            <td>
+                                <div class="fw-semibold"><i class="fas {{ p.icon|default:'fa-route' }} me-2" style="color:{{ p.color|default:'#2563eb' }}"></i>{{ p.name }}</div>
+                                <div class="small text-muted text-truncate" style="max-width:280px;" title="{{ p.description }}">{{ p.description|truncatechars:60 }}</div>
+                            </td>
+                            <td class="small text-muted">${{ p.avg_salary_min }} - ${{ p.avg_salary_max }}</td>
+                            <td><span class="skill-badge">{{ p.growth_outlook|default:"—" }}</span></td>
+                            <td><span class="badge text-bg-primary rounded-pill">{{ p.milestones_count }}</span></td>
+                            <td>
+                                <span class="badge {% if p.is_active %}text-bg-success{% else %}text-bg-secondary{% endif %} rounded-pill">
+                                    {% if p.is_active %}Active{% else %}Inactive{% endif %}
+                                </span>
+                            </td>
+                            <td class="small text-muted">{{ p.created_at|date:"M d, Y" }}</td>
+                            <td class="link-cell text-end">
+                                <a href="{% url 'admin:careers_careerpath_change' p.pk %}" title="Edit"><i class="fas fa-pen-to-square"></i></a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="7">
+                            <div class="empty-state"><i class="fas fa-route"></i><div>No career paths found{% if query %} matching "{{ query }}"{% endif %}.</div></div>
+                        </td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Career Milestones table -->
+        <div class="section-card card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="fw-bold mb-0"><i class="fas fa-bullseye text-success me-2"></i> All Career Milestones
+                    <span class="count-pill ms-2">{{ milestones.count }}</span></h5>
+                <a href="{% url 'admin:careers_careerpathmilestone_changelist' %}" class="small text-primary text-decoration-none">Manage in Django admin <i class="fas fa-arrow-right ms-1"></i></a>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th>Title</th><th>Career Path</th><th>Level</th><th>Experience</th><th>Salary</th><th>Skills</th><th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for m in milestones %}
+                        <tr class="table-row-hover">
+                            <td>
+                                <div class="fw-semibold">{{ m.title }}</div>
+                                <div class="small text-muted text-truncate" style="max-width:240px;" title="{{ m.description }}">{{ m.description|truncatechars:50 }}</div>
+                            </td>
+                            <td class="small text-muted">{{ m.career_path.name }}</td>
+                            <td><span class="skill-badge">{{ m.get_level_display }}</span></td>
+                            <td class="small text-muted">{{ m.experience_years }}</td>
+                            <td class="small text-muted">{{ m.salary_range|default:"—" }}</td>
+                            <td>
+                                {% if m.skills_required.all %}
+                                    {% for skill in m.skills_required.all|slice:":3" %}<span class="skill-badge">{{ skill.name }}</span> {% endfor %}
+                                    {% if m.skills_required.count > 3 %}<span class="text-muted small">+{{ m.skills_required.count|add:"-3" }}</span>{% endif %}
+                                {% else %}<span class="text-muted small">—</span>{% endif %}
+                            </td>
+                            <td class="link-cell text-end">
+                                <a href="{% url 'admin:careers_careerpathmilestone_change' m.pk %}" title="Edit"><i class="fas fa-pen-to-square"></i></a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="7">
+                            <div class="empty-state"><i class="fas fa-bullseye"></i><div>No milestones found{% if query %} matching "{{ query }}"{% endif %}.</div></div>
+                        </td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Interview Questions table -->
+        <div class="section-card card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="fw-bold mb-0"><i class="fas fa-circle-question text-warning me-2"></i> All Interview Questions
+                    <span class="count-pill ms-2">{{ interview_questions.count }}</span></h5>
+                <a href="{% url 'admin:careers_interviewquestion_changelist' %}" class="small text-primary text-decoration-none">Manage in Django admin <i class="fas fa-arrow-right ms-1"></i></a>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th>Question</th><th>Skill</th><th>Career Path</th><th>Difficulty</th><th>Type</th><th>Created</th><th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for q in interview_questions %}
+                        <tr class="table-row-hover">
+                            <td>
+                                <div class="text-truncate" style="max-width:300px;" title="{{ q.question }}">{{ q.question|truncatechars:80 }}</div>
+                            </td>
+                            <td><span class="skill-badge">{{ q.skill.name }}</span></td>
+                            <td class="small text-muted">{% if q.career_path %}{{ q.career_path.name }}{% else %}—{% endif %}</td>
+                            <td>
+                                <span class="badge {% if q.difficulty == 'advanced' %}text-bg-danger{% elif q.difficulty == 'intermediate' %}text-bg-warning{% else %}text-bg-success{% endif %} rounded-pill">
+                                    {{ q.get_difficulty_display }}
+                                </span>
+                            </td>
+                            <td><span class="skill-badge">{% if q.is_behavioral %}Behavioral{% else %}Technical{% endif %}</span></td>
+                            <td class="small text-muted">{{ q.created_at|date:"M d, Y" }}</td>
+                            <td class="link-cell text-end">
+                                <a href="{% url 'admin:careers_interviewquestion_change' q.pk %}" title="Edit"><i class="fas fa-pen-to-square"></i></a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="7">
+                            <div class="empty-state"><i class="fas fa-circle-question"></i><div>No interview questions found{% if query %} matching "{{ query }}"{% endif %}.</div></div>
+                        </td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Learning Resources table -->
+        <div class="section-card card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="fw-bold mb-0"><i class="fas fa-book-open text-info me-2"></i> All Learning Resources
+                    <span class="count-pill ms-2">{{ learning_resources.count }}</span></h5>
+                <a href="{% url 'admin:careers_skillresource_changelist' %}" class="small text-primary text-decoration-none">Manage in Django admin <i class="fas fa-arrow-right ms-1"></i></a>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th>Title</th><th>Skill</th><th>Type</th><th>Difficulty</th><th>Free</th><th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in learning_resources %}
+                        <tr class="table-row-hover">
+                            <td class="link-cell">
+                                <a href="{{ r.url }}" target="_blank" class="fw-semibold">{{ r.title|truncatechars:60 }}</a>
+                                {% if r.description %}<div class="small text-muted text-truncate" style="max-width:260px;" title="{{ r.description }}">{{ r.description|truncatechars:50 }}</div>{% endif %}
+                            </td>
+                            <td><span class="skill-badge">{{ r.skill.name }}</span></td>
+                            <td class="small text-muted">{{ r.get_resource_type_display }}</td>
+                            <td><span class="skill-badge">{{ r.get_difficulty_display }}</span></td>
+                            <td>
+                                <span class="badge {% if r.is_free %}text-bg-success{% else %}text-bg-secondary{% endif %} rounded-pill">
+                                    {% if r.is_free %}Free{% else %}Paid{% endif %}
+                                </span>
+                            </td>
+                            <td class="link-cell text-end">
+                                <a href="{% url 'admin:careers_skillresource_change' r.pk %}" title="Edit"><i class="fas fa-pen-to-square"></i></a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="6">
+                            <div class="empty-state"><i class="fas fa-book-open"></i><div>No learning resources found{% if query %} matching "{{ query }}"{% endif %}.</div></div>
+                        </td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

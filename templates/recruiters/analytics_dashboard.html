@@ -1,0 +1,570 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Recruiter Analytics | PortAL{% endblock %}
+
+{% block extra_css %}
+<style>
+    .analytics-stat {
+        transition: all 0.3s ease;
+        border: none;
+        border-radius: 1rem;
+    }
+    .analytics-stat:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+    }
+    .analytics-icon {
+        width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 14px;
+        font-size: 20px;
+    }
+    .chart-container {
+        position: relative;
+        height: 280px;
+        width: 100%;
+    }
+    .funnel-bar {
+        transition: width 1s ease;
+        border-radius: 8px;
+    }
+    .funnel-stage {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 12px;
+    }
+    .funnel-label {
+        min-width: 120px;
+        font-weight: 600;
+        font-size: 14px;
+        color: #334155;
+    }
+    .funnel-track {
+        flex-grow: 1;
+        height: 32px;
+        background: #f1f5f9;
+        border-radius: 8px;
+        overflow: hidden;
+        position: relative;
+    }
+    .funnel-fill {
+        height: 100%;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        padding-right: 12px;
+        font-size: 13px;
+        font-weight: 700;
+        color: white;
+        min-width: fit-content;
+    }
+    .export-btn-group {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+    .section-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+    .section-header .icon-wrap {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 12px;
+    }
+    .skill-tag-sm {
+        display: inline-block;
+        padding: 3px 10px;
+        background: #eff6ff;
+        color: #2563eb;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 500;
+        margin: 2px;
+    }
+    .day-bar {
+        height: 40px;
+        border-radius: 6px;
+        transition: width 1s ease;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-3 col-lg-2 d-md-block sidebar collapse shadow-sm">
+            <div class="position-sticky pt-3">
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="sidebar-link" href="{% url 'recruiter_dashboard' %}">
+                            <i class="fas fa-chart-line"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="sidebar-link active" href="{% url 'recruiter_analytics' %}">
+                            <i class="fas fa-chart-pie"></i> Analytics
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="sidebar-link" href="{% url 'post_job' %}">
+                            <i class="fas fa-plus-circle"></i> Post a Job
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="sidebar-link" href="{% url 'manage_jobs' %}">
+                            <i class="fas fa-briefcase"></i> Manage Jobs
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="sidebar-link" href="{% url 'all_applicants' %}">
+                            <i class="fas fa-users"></i> Applicants
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="sidebar-link" href="{% url 'company_profile' %}">
+                            <i class="fas fa-building"></i> Company Profile
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-4">
+            <!-- Header -->
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-4 border-bottom">
+                <div>
+                    <h1 class="h2 fw-bold mb-1"><i class="fas fa-chart-pie text-primary me-2"></i> Recruiter Analytics</h1>
+                    <p class="text-secondary mb-0">Comprehensive hiring insights and performance metrics</p>
+                </div>
+                <div class="export-btn-group">
+                    <a href="{% url 'export_applicants_csv' %}" class="btn btn-sm btn-outline-success">
+                        <i class="fas fa-file-csv me-1"></i> Export Applicants
+                    </a>
+                    <a href="{% url 'export_jobs_csv' %}" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-file-csv me-1"></i> Export Jobs
+                    </a>
+                    <a href="{% url 'export_report' %}" class="btn btn-sm btn-primary-custom" target="_blank">
+                        <i class="fas fa-file-pdf me-1"></i> Full Report
+                    </a>
+                </div>
+            </div>
+
+            <!-- Overview Stats -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-3">
+                    <div class="card analytics-stat p-4">
+                        <div class="d-flex align-items-center">
+                            <div class="analytics-icon bg-primary bg-opacity-10 me-3">
+                                <i class="fas fa-briefcase text-primary"></i>
+                            </div>
+                            <div>
+                                <div class="text-secondary small fw-medium">Active Jobs</div>
+                                <h3 class="fw-bold mb-0">{{ jobs_count }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card analytics-stat p-4">
+                        <div class="d-flex align-items-center">
+                            <div class="analytics-icon bg-success bg-opacity-10 me-3">
+                                <i class="fas fa-users text-success"></i>
+                            </div>
+                            <div>
+                                <div class="text-secondary small fw-medium">Total Applicants</div>
+                                <h3 class="fw-bold mb-0">{{ funnel.total }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card analytics-stat p-4">
+                        <div class="d-flex align-items-center">
+                            <div class="analytics-icon bg-info bg-opacity-10 me-3">
+                                <i class="fas fa-star text-info"></i>
+                            </div>
+                            <div>
+                                <div class="text-secondary small fw-medium">Shortlist Rate</div>
+                                <h3 class="fw-bold mb-0">{{ funnel.shortlist_rate }}%</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card analytics-stat p-4">
+                        <div class="d-flex align-items-center">
+                            <div class="analytics-icon bg-warning bg-opacity-10 me-3">
+                                <i class="fas fa-check-circle text-warning"></i>
+                            </div>
+                            <div>
+                                <div class="text-secondary small fw-medium">Acceptance Rate</div>
+                                <h3 class="fw-bold mb-0">{{ funnel.acceptance_rate }}%</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-4">
+                <!-- Hiring Funnel -->
+                <div class="col-lg-6">
+                    <div class="card card-professional p-4 h-100">
+                        <div class="section-header">
+                            <div class="icon-wrap bg-primary bg-opacity-10">
+                                <i class="fas fa-filter text-primary"></i>
+                            </div>
+                            <h5 class="fw-bold mb-0">Hiring Funnel</h5>
+                        </div>
+
+                        {% if funnel.total > 0 %}
+                        <div class="funnel-stage">
+                            <div class="funnel-label">📥 Applied</div>
+                            <div class="funnel-track">
+                                <div class="funnel-fill bg-primary" style="width: 100%;">{{ funnel.total }}</div>
+                            </div>
+                        </div>
+                        <div class="funnel-stage">
+                            <div class="funnel-label">⭐ Shortlisted</div>
+                            <div class="funnel-track">
+                                <div class="funnel-fill bg-info" style="width: {% widthratio funnel.shortlisted funnel.total 100 %}%;">
+                                    {{ funnel.shortlisted }} ({{ funnel.shortlist_rate }}%)
+                                </div>
+                            </div>
+                        </div>
+                        <div class="funnel-stage">
+                            <div class="funnel-label">❌ Rejected</div>
+                            <div class="funnel-track">
+                                <div class="funnel-fill bg-danger" style="width: {% widthratio funnel.rejected funnel.total 100 %}%;">
+                                    {{ funnel.rejected }} ({{ funnel.rejection_rate }}%)
+                                </div>
+                            </div>
+                        </div>
+                        <div class="funnel-stage">
+                            <div class="funnel-label">✅ Accepted</div>
+                            <div class="funnel-track">
+                                <div class="funnel-fill bg-success" style="width: {% widthratio funnel.accepted funnel.total 100 %}%;">
+                                    {{ funnel.accepted }} ({{ funnel.acceptance_rate }}%)
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row g-2 mt-3 pt-3 border-top">
+                            <div class="col-6">
+                                <div class="small text-secondary fw-medium">Response Rate</div>
+                                <div class="fw-bold fs-5">{{ time_analytics.response_rate }}%</div>
+                                <div class="small text-muted">{{ time_analytics.responded }}/{{ time_analytics.total }} responded</div>
+                            </div>
+                            <div class="col-6">
+                                <div class="small text-secondary fw-medium">Avg. Time Pending</div>
+                                <div class="fw-bold fs-5">{{ time_analytics.avg_pending_days }} days</div>
+                                <div class="small text-muted">Peak day: {{ time_analytics.peak_day }}</div>
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-filter fa-3x mb-3 text-light"></i>
+                            <p class="text-secondary mb-0">No applications yet to analyze.</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Monthly Trends Chart -->
+                <div class="col-lg-6">
+                    <div class="card card-professional p-4 h-100">
+                        <div class="section-header">
+                            <div class="icon-wrap bg-success bg-opacity-10">
+                                <i class="fas fa-chart-line text-success"></i>
+                            </div>
+                            <h5 class="fw-bold mb-0">Monthly Trends</h5>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="trendChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Salary Analytics -->
+                <div class="col-lg-6">
+                    <div class="card card-professional p-4 h-100">
+                        <div class="section-header">
+                            <div class="icon-wrap bg-warning bg-opacity-10">
+                                <i class="fas fa-dollar-sign text-warning"></i>
+                            </div>
+                            <h5 class="fw-bold mb-0">Salary Analytics</h5>
+                        </div>
+
+                        {% if salary.total_salary_jobs > 0 %}
+                        <div class="row g-3 mb-4">
+                            <div class="col-4 text-center">
+                                <div class="small text-secondary">Avg Min</div>
+                                <div class="fw-bold fs-5">${{ salary.avg_min|floatformat:0 }}K</div>
+                            </div>
+                            <div class="col-4 text-center">
+                                <div class="small text-secondary">Avg Max</div>
+                                <div class="fw-bold fs-5">${{ salary.avg_max|floatformat:0 }}K</div>
+                            </div>
+                            <div class="col-4 text-center">
+                                <div class="small text-secondary">Jobs Analyzed</div>
+                                <div class="fw-bold fs-5">{{ salary.total_salary_jobs }}</div>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Job Type</th>
+                                        <th class="text-end">Avg</th>
+                                        <th class="text-end">Range</th>
+                                        <th class="text-end">Jobs</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for type_name, data in salary.by_type.items %}
+                                    <tr>
+                                        <td class="fw-medium">{{ type_name }}</td>
+                                        <td class="text-end">${{ data.avg|floatformat:0 }}K</td>
+                                        <td class="text-end">${{ data.min|floatformat:0 }}K - ${{ data.max|floatformat:0 }}K</td>
+                                        <td class="text-end">{{ data.count }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {% if salary.highest_paying %}
+                        <div class="mt-2 small text-success">
+                            <i class="fas fa-arrow-up me-1"></i>
+                            Highest: <strong>{{ salary.highest_paying.title }}</strong> (${{ salary.highest_paying.salary_max|floatformat:0 }}K)
+                        </div>
+                        {% endif %}
+                        {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-dollar-sign fa-3x mb-3 text-light"></i>
+                            <p class="text-secondary mb-0">Add salary info to your jobs for analytics.</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Applicant Demographics + Day Distribution -->
+                <div class="col-lg-6">
+                    <div class="card card-professional p-4 h-100">
+                        <div class="section-header">
+                            <div class="icon-wrap bg-info bg-opacity-10">
+                                <i class="fas fa-users text-info"></i>
+                            </div>
+                            <h5 class="fw-bold mb-0">Applicant Insights</h5>
+                        </div>
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-4 text-center">
+                                <div class="small text-secondary">With Resume</div>
+                                <div class="fw-bold">{{ demographics.with_resume }}</div>
+                                <div class="small text-muted">{{ demographics.resume_rate }}%</div>
+                            </div>
+                            <div class="col-4 text-center">
+                                <div class="small text-secondary">With GitHub</div>
+                                <div class="fw-bold">{{ demographics.with_github }}</div>
+                                <div class="small text-muted">linked profiles</div>
+                            </div>
+                            <div class="col-4 text-center">
+                                <div class="small text-secondary">Unique Skills</div>
+                                <div class="fw-bold">{{ demographics.total_skills }}</div>
+                                <div class="small text-muted">across applicants</div>
+                            </div>
+                        </div>
+
+                        {% if demographics.top_skills %}
+                        <div class="mb-3">
+                            <div class="small fw-bold text-secondary mb-2">Top Skills Among Applicants</div>
+                            <div>
+                                {% for skill in demographics.top_skills|slice:":8" %}
+                                <span class="skill-tag-sm">{{ skill.name }} ({{ skill.count }})</span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Application Day Distribution -->
+                        <div class="mt-3 pt-3 border-top">
+                            <div class="small fw-bold text-secondary mb-2">Peak Application Days</div>
+                            {% for day in time_analytics.day_distribution %}
+                            <div class="d-flex align-items-center gap-2 mb-1" style="font-size: 13px;">
+                                <div style="min-width: 80px;">{{ day.day|slice:":3" }}</div>
+                                <div class="flex-grow-1" style="height: 20px; background: #f1f5f9; border-radius: 4px; overflow: hidden;">
+                                    {% if time_analytics.total > 0 %}
+                                    <div class="day-bar bg-primary" style="width: {% widthratio day.count funnel.total 100 %}%; height: 100%;"></div>
+                                    {% endif %}
+                                </div>
+                                <div class="fw-bold" style="min-width: 30px; text-align: right;">{{ day.count }}</div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Funnel by Job Breakdown -->
+                <div class="col-12">
+                    <div class="card card-professional p-4">
+                        <div class="section-header">
+                            <div class="icon-wrap bg-secondary bg-opacity-10">
+                                <i class="fas fa-table text-secondary"></i>
+                            </div>
+                            <h5 class="fw-bold mb-0">Funnel by Job Posting</h5>
+                        </div>
+
+                        {% if funnel_by_job %}
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead class="bg-light">
+                                    <tr>
+                                        <th class="border-0">Job Title</th>
+                                        <th class="border-0 text-center">Total</th>
+                                        <th class="border-0 text-center">Pending</th>
+                                        <th class="border-0 text-center">Shortlisted</th>
+                                        <th class="border-0 text-center">Accepted</th>
+                                        <th class="border-0 text-center">Rejected</th>
+                                        <th class="border-0 text-center">Shortlist %</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in funnel_by_job %}
+                                    <tr>
+                                        <td class="fw-medium">
+                                            <a href="{% url 'view_applicants' item.job_id %}" class="text-decoration-none">{{ item.job_title }}</a>
+                                        </td>
+                                        <td class="text-center fw-bold">{{ item.total }}</td>
+                                        <td class="text-center">
+                                            <span class="badge bg-primary bg-opacity-10 text-primary px-3">{{ item.pending }}</span>
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="badge bg-info bg-opacity-10 text-info px-3">{{ item.shortlisted }}</span>
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="badge bg-success bg-opacity-10 text-success px-3">{{ item.accepted }}</span>
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="badge bg-danger bg-opacity-10 text-danger px-3">{{ item.rejected }}</span>
+                                        </td>
+                                        <td class="text-center fw-medium">
+                                            {% widthratio item.shortlisted item.total 100 %}%
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <div class="text-center py-4">
+                            <p class="text-secondary mb-0">No job data available yet.</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Monthly Trends Line Chart
+    const trendCtx = document.getElementById('trendChart').getContext('2d');
+    const months = {{ monthly_trends|safe|default:'[]' }};
+
+    if (months.length > 0) {
+        new Chart(trendCtx, {
+            type: 'line',
+            data: {
+                labels: months.map(m => m.month_short),
+                datasets: [
+                    {
+                        label: 'Applications',
+                        data: months.map(m => m.applications),
+                        borderColor: '#2563eb',
+                        backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: '#2563eb',
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                    },
+                    {
+                        label: 'Shortlisted',
+                        data: months.map(m => m.shortlisted),
+                        borderColor: '#06b6d4',
+                        backgroundColor: 'rgba(6, 182, 212, 0.1)',
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: '#06b6d4',
+                        pointRadius: 3,
+                        pointHoverRadius: 5,
+                    },
+                    {
+                        label: 'Accepted',
+                        data: months.map(m => m.accepted),
+                        borderColor: '#16a34a',
+                        backgroundColor: 'rgba(22, 163, 74, 0.1)',
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: '#16a34a',
+                        pointRadius: 3,
+                        pointHoverRadius: 5,
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            usePointStyle: true,
+                            padding: 16,
+                            font: { size: 11 }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1,
+                            font: { size: 11 }
+                        },
+                        grid: { color: 'rgba(0,0,0,0.05)' }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { font: { size: 10 } }
+                    }
+                }
+            }
+        });
+    } else {
+        document.getElementById('trendChart').closest('.card').querySelector('.chart-container').innerHTML =
+            '<div class="text-center py-5"><i class="fas fa-chart-line fa-3x mb-3 text-light"></i><p class="text-secondary mb-0">No trend data yet.</p></div>';
+    }
+});
+</script>
+{% endblock %}

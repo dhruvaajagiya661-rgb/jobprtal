@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: 'Inter', -apple-system, sans-serif; background: #f1f5f9; margin: 0; padding: 0; }
+        .container { max-width: 600px; margin: 0 auto; padding: 40px 20px; }
+        .card { background: white; border-radius: 16px; padding: 40px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .logo { font-size: 28px; font-weight: 800; color: #2563eb; text-align: center; margin-bottom: 24px; }
+        h1 { font-size: 24px; color: #0f172a; margin-bottom: 16px; }
+        p { color: #475569; line-height: 1.7; margin-bottom: 16px; }
+        .btn { display: inline-block; padding: 12px 32px; background: #2563eb; color: white; text-decoration: none; border-radius: 8px; font-weight: 600; }
+        .features { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 24px 0; }
+        .feature { background: #f8fafc; padding: 16px; border-radius: 8px; }
+        .feature-icon { font-size: 24px; margin-bottom: 8px; }
+        .feature-title { font-weight: 600; color: #0f172a; margin-bottom: 4px; }
+        .feature-desc { font-size: 13px; color: #64748b; }
+        .footer { text-align: center; padding-top: 24px; color: #94a3b8; font-size: 13px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="logo">PortAL</div>
+            <h1>Welcome to PortAL, {{ user.username }}! 🚀</h1>
+            <p>We're thrilled to have you join the most trusted internship and job portal. Your career journey starts now!</p>
+
+            {% if is_student %}
+            <div class="features">
+                <div class="feature">
+                    <div class="feature-icon">🔍</div>
+                    <div class="feature-title">Browse Jobs</div>
+                    <div class="feature-desc">Explore 1000+ opportunities</div>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">📊</div>
+                    <div class="feature-title">Track Applications</div>
+                    <div class="feature-desc">Real-time status updates</div>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">🧭</div>
+                    <div class="feature-title">Career Paths</div>
+                    <div class="feature-desc">Plan your future</div>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">🤖</div>
+                    <div class="feature-title">AI Assistant</div>
+                    <div class="feature-desc">Get personalized help</div>
+                </div>
+            </div>
+
+            <div style="text-align: center; margin: 32px 0;">
+                <a href="{{ login_url }}" class="btn">Complete Your Profile →</a>
+            </div>
+
+            {% elif is_recruiter %}
+            <div class="features">
+                <div class="feature">
+                    <div class="feature-icon">📝</div>
+                    <div class="feature-title">Post Jobs</div>
+                    <div class="feature-desc">Reach top talent</div>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">👥</div>
+                    <div class="feature-title">Manage Applicants</div>
+                    <div class="feature-desc">Review & shortlist</div>
+                </div>
+            </div>
+
+            <div style="text-align: center; margin: 32px 0;">
+                <a href="{{ login_url }}" class="btn">Set Up Your Company →</a>
+            </div>
+            {% endif %}
+
+            <p>If you have any questions, our AI Assistant is always here to help!</p>
+
+            <div class="footer">
+                <p>© 2026 PortAL. Built for Career Excellence.</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

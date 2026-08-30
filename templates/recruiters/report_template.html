@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Analytics Report - {{ recruiter.email }}</title>
+    <style>
+        @page { size: A4; margin: 20mm; }
+        body { font-family: 'Inter', -apple-system, sans-serif; color: #0f172a; padding: 40px; line-height: 1.6; }
+        h1 { font-size: 28px; color: #2563eb; border-bottom: 3px solid #2563eb; padding-bottom: 12px; }
+        h2 { font-size: 20px; color: #0f172a; margin-top: 32px; }
+        h3 { font-size: 16px; color: #475569; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; }
+        .logo { font-size: 32px; font-weight: 800; color: #2563eb; }
+        .report-date { color: #64748b; font-size: 14px; }
+        .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin: 24px 0; }
+        .stat-card { background: #f8fafc; padding: 16px; border-radius: 8px; text-align: center; }
+        .stat-value { font-size: 28px; font-weight: 800; color: #2563eb; }
+        .stat-label { font-size: 13px; color: #64748b; }
+        table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+        th { background: #f1f5f9; padding: 10px 12px; text-align: left; font-size: 13px; color: #475569; }
+        td { padding: 10px 12px; border-bottom: 1px solid #e2e8f0; font-size: 13px; }
+        .funnel-bar { display: inline-block; height: 24px; border-radius: 4px; margin: 4px 0; }
+        .section { page-break-inside: avoid; margin-bottom: 32px; }
+        .footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid #e2e8f0; font-size: 12px; color: #94a3b8; text-align: center; }
+        .badge { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+        .badge-primary { background: #eff6ff; color: #2563eb; }
+        .badge-success { background: #f0fdf4; color: #16a34a; }
+        .badge-danger { background: #fef2f2; color: #dc2626; }
+        .avoid-break { page-break-inside: avoid; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div>
+            <div class="logo">PortAL Analytics</div>
+            <div>{{ recruiter.email }}</div>
+        </div>
+        <div class="report-date">{{ report_date }}</div>
+    </div>
+
+    <h1>Recruiter Analytics Report</h1>
+
+    <!-- Overview Stats -->
+    <div class="stat-grid">
+        <div class="stat-card">
+            <div class="stat-value">{{ jobs_count }}</div>
+            <div class="stat-label">Active Jobs</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ funnel.total }}</div>
+            <div class="stat-label">Total Applicants</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ funnel.shortlist_rate }}%</div>
+            <div class="stat-label">Shortlist Rate</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ funnel.acceptance_rate }}%</div>
+            <div class="stat-label">Acceptance Rate</div>
+        </div>
+    </div>
+
+    <!-- Hiring Funnel -->
+    <div class="section avoid-break">
+        <h2>📊 Hiring Funnel</h2>
+        <table>
+            <tr>
+                <th>Stage</th>
+                <th>Count</th>
+                <th>Percentage</th>
+            </tr>
+            <tr>
+                <td>📥 Applied</td>
+                <td><strong>{{ funnel.total }}</strong></td>
+                <td>100%</td>
+            </tr>
+            <tr>
+                <td>⭐ Shortlisted</td>
+                <td><strong>{{ funnel.shortlisted }}</strong></td>
+                <td>{{ funnel.shortlist_rate }}%</td>
+            </tr>
+            <tr>
+                <td>❌ Rejected</td>
+                <td><strong>{{ funnel.rejected }}</strong></td>
+                <td>{{ funnel.rejection_rate }}%</td>
+            </tr>
+            <tr>
+                <td>✅ Accepted</td>
+                <td><strong>{{ funnel.accepted }}</strong></td>
+                <td>{{ funnel.acceptance_rate }}%</td>
+            </tr>
+        </table>
+        <p>Response Rate: <strong>{{ time_analytics.response_rate }}%</strong> ({{ time_analytics.responded }}/{{ time_analytics.total }} applications received a status update)</p>
+        <p>Average Time Pending: <strong>{{ time_analytics.avg_pending_days }} days</strong></p>
+    </div>
+
+    <!-- Salary Overview -->
+    {% if salary.total_salary_jobs > 0 %}
+    <div class="section avoid-break">
+        <h2>💰 Salary Overview</h2>
+        <div class="stat-grid" style="grid-template-columns: repeat(3, 1fr);">
+            <div class="stat-card">
+                <div class="stat-value">${{ salary.avg_min|floatformat:0 }}K</div>
+                <div class="stat-label">Average Minimum</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">${{ salary.avg_max|floatformat:0 }}K</div>
+                <div class="stat-label">Average Maximum</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ salary.total_salary_jobs }}</div>
+                <div class="stat-label">Jobs Analyzed</div>
+            </div>
+        </div>
+        <table>
+            <tr>
+                <th>Job Type</th>
+                <th>Average</th>
+                <th>Range</th>
+                <th>Count</th>
+            </tr>
+            {% for type_name, data in salary.by_type.items %}
+            <tr>
+                <td>{{ type_name }}</td>
+                <td>${{ data.avg|floatformat:0 }}K</td>
+                <td>${{ data.min|floatformat:0 }}K - ${{ data.max|floatformat:0 }}K</td>
+                <td>{{ data.count }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+        {% if salary.highest_paying %}
+        <p>🏆 Highest Paying: <strong>{{ salary.highest_paying.title }}</strong> at ${{ salary.highest_paying.salary_max|floatformat:0 }}K</p>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Monthly Trends -->
+    {% if trends %}
+    <div class="section">
+        <h2>📈 Monthly Trends (Last 6 Months)</h2>
+        <table>
+            <tr>
+                <th>Month</th>
+                <th>Applications</th>
+                <th>Shortlisted</th>
+                <th>Accepted</th>
+            </tr>
+            {% for month in trends %}
+            <tr>
+                <td><strong>{{ month.month }}</strong></td>
+                <td>{{ month.applications }}</td>
+                <td>{{ month.shortlisted }}</td>
+                <td>{{ month.accepted }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+    {% endif %}
+
+    <!-- Applicant Demographics -->
+    {% if demographics.top_skills %}
+    <div class="section avoid-break">
+        <h2>👥 Applicant Demographics</h2>
+        <div class="stat-grid" style="grid-template-columns: repeat(3, 1fr);">
+            <div class="stat-card">
+                <div class="stat-value">{{ demographics.with_resume }}</div>
+                <div class="stat-label">Resume Uploaded</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ demographics.with_github }}</div>
+                <div class="stat-label">GitHub Linked</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ demographics.total_skills }}</div>
+                <div class="stat-label">Unique Skills</div>
+            </div>
+        </div>
+        <h3>Top Skills</h3>
+        <table>
+            <tr><th>Skill</th><th>Count</th></tr>
+            {% for skill in demographics.top_skills|slice:":10" %}
+            <tr><td>{{ skill.name }}</td><td>{{ skill.count }}</td></tr>
+            {% endfor %}
+        </table>
+    </div>
+    {% endif %}
+
+    <div class="footer">
+        <p>Generated by PortAL Analytics on {{ report_date }} | © 2026 PortAL. All rights reserved.</p>
+    </div>
+</body>
+</html>

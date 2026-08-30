@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-md-10 mx-auto">
+            <h2 class="fw-bold mb-4">My Applications</h2>
+            <div class="card card-professional p-4">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="border-0">Job Title</th>
+                                <th class="border-0">Company</th>
+                                <th class="border-0">Date Applied</th>
+                                <th class="border-0">Status</th>
+                                <th class="border-0">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for app in applications %}
+                            <tr>
+                                <td class="fw-medium">{{ app.job.title }}</td>
+                                <td>{{ app.job.company.name }}</td>
+                                <td>{{ app.applied_at|date:"M d, Y" }}</td>
+                                <td>
+                                    <span class="badge rounded-pill {% if app.status == 'Applied' %}bg-primary{% elif app.status == 'Shortlisted' %}bg-success{% else %}bg-secondary{% endif %} bg-opacity-10 text-{% if app.status == 'Applied' %}primary{% elif app.status == 'Shortlisted' %}success{% else %}secondary{% endif %} px-3">
+                                        {{ app.status }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <a href="{% url 'job_detail' app.job.id %}" class="btn btn-sm btn-light">View Job</a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center py-5 text-secondary">
+                                    <i class="fas fa-folder-open fa-3x mb-3 d-block opacity-25"></i>
+                                    No applications found. <a href="{% url 'job_list' %}">Start applying now!</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

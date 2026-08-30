@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-5">
+        <div>
+            {% if is_global %}
+                <h2 class="fw-bold mb-1">All Applicants</h2>
+                <p class="text-secondary mb-0">View all candidates who applied to your job and internship postings.</p>
+            {% else %}
+                <h2 class="fw-bold mb-1">Applicants for {{ job.title }}</h2>
+                <p class="text-secondary mb-0">Manage and shortlist candidates for your job posting.</p>
+            {% endif %}
+        </div>
+        <a href="{% url 'recruiter_dashboard' %}" class="btn btn-light">Back to Dashboard</a>
+    </div>
+
+    <div class="card card-professional p-4">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="bg-light">
+                    <tr>
+                        <th class="border-0">Candidate Email</th>
+                        {% if is_global %}
+                            <th class="border-0">Job Title</th>
+                        {% endif %}
+                        <th class="border-0">Applied On</th>
+                        <th class="border-0">Resume</th>
+                        <th class="border-0">Current Status</th>
+                        <th class="border-0 text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for app in applicants %}
+                    <tr>
+                        <td class="fw-bold">{{ app.student.email }}</td>
+                        {% if is_global %}
+                            <td>
+                                {% if app.job %}{{ app.job.title }}
+                                {% elif app.internship %}{{ app.internship.title }}
+                                {% else %}—{% endif %}
+                            </td>
+                        {% endif %}
+                        <td>{{ app.applied_at|date:"M d, Y" }}</td>
+                        <td>
+                            <a href="{{ app.resume.url }}" class="btn btn-sm btn-outline-primary" target="_blank">
+                                <i class="fas fa-file-download me-1"></i> View Resume
+                            </a>
+                        </td>
+                        <td>
+                            <span class="badge rounded-pill {% if app.status == 'Applied' %}bg-primary{% elif app.status == 'Shortlisted' %}bg-success{% elif app.status == 'Rejected' %}bg-danger{% else %}bg-secondary{% endif %} bg-opacity-10 text-{% if app.status == 'Applied' %}primary{% elif app.status == 'Shortlisted' %}success{% elif app.status == 'Rejected' %}danger{% else %}secondary{% endif %} px-3">
+                                {{ app.status }}
+                            </span>
+                        </td>
+                        <td class="text-end">
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                    Change Status
+                                </button>
+                                <ul class="dropdown-menu shadow border-0">
+                                    <li><a class="dropdown-item text-success" href="{% url 'update_status' app.id 'Shortlisted' %}">Shortlist</a></li>
+                                    <li><a class="dropdown-item text-danger" href="{% url 'update_status' app.id 'Rejected' %}">Reject</a></li>
+                                    <li><a class="dropdown-item text-primary" href="{% url 'update_status' app.id 'Accepted' %}">Accept</a></li>
+                                </ul>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center py-5 text-secondary">
+                            <i class="fas fa-users-slash fa-3x mb-3 d-block opacity-25"></i>
+                            No applicants yet for this position.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

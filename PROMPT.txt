@@ -1,0 +1,691 @@
+Final Architecture
+Frontend
+React.js
+TypeScript
+Tailwind CSS
+ShadCN UI
+
+Backend
+Django
+Django REST Framework
+
+Database
+PostgreSQL
+
+Authentication
+JWT + OTP
+
+Storage
+Cloudinary
+
+Notifications
+Firebase FCM / Email
+User Hierarchy
+Owner (Main Admin)
+│
+├── Managers
+│
+└── Employees
+
+Role Permissions
+
+Owner (Main Admin)
+Full Access
+Dashboard
+Farm Management
+Manager Management
+Employee Management
+Attendance Management
+Salary Management
+Crop Management
+Inventory Management
+Task Management
+Expense Management
+Income Management
+Reports
+Notifications
+Settings
+Languages
+Activity Logs
+Dashboard Widgets
+Total Farms
+Total Managers
+Total Employees
+
+Today's Attendance
+
+Active Crops
+
+Low Inventory Alerts
+
+Total Income
+
+Total Expenses
+
+Profit & Loss
+
+Recent Activities
+Manager
+Allowed
+Dashboard
+
+Employee Management
+
+Attendance
+
+Leave Requests
+
+Task Management
+
+Crop Activities
+
+Inventory Updates
+
+Expense Entries
+
+Income Entries
+
+Assigned Reports
+Restricted
+Settings
+
+Manager Creation
+
+Permissions
+
+System Configuration
+
+Language Settings
+
+Salary Management
+Dashboard Widgets
+Today's Attendance
+
+Assigned Employees
+
+Pending Tasks
+
+Crop Activities
+
+Inventory Alerts
+
+Recent Expenses
+Employee
+Allowed
+Dashboard
+
+Attendance
+
+Leave Requests
+
+Assigned Tasks
+
+Task Photos
+
+Task Status Updates
+
+Profile
+
+Notifications
+Restricted
+Reports
+
+Expenses
+
+Income
+
+Inventory
+
+Employee Management
+
+Settings
+Dashboard Widgets
+Attendance
+
+Assigned Tasks
+
+Leave Status
+
+Notifications
+
+Work History
+React Frontend Structure
+src
+│
+├── app
+│
+├── components
+│   ├── ui
+│   ├── forms
+│   ├── charts
+│   ├── tables
+│   ├── cards
+│   └── modals
+│
+├── layouts
+│   ├── OwnerLayout
+│   ├── ManagerLayout
+│   └── EmployeeLayout
+│
+├── pages
+│
+│   ├── auth
+│   │   ├── Login
+│   │   ├── OTPLogin
+│   │   └── ForgotPassword
+│
+│   ├── owner
+│   │   ├── Dashboard
+│   │   ├── Farms
+│   │   ├── Managers
+│   │   ├── Employees
+│   │   ├── Attendance
+│   │   ├── Salary
+│   │   ├── Crops
+│   │   ├── Inventory
+│   │   ├── Tasks
+│   │   ├── Expenses
+│   │   ├── Income
+│   │   ├── Reports
+│   │   ├── Notifications
+│   │   └── Settings
+│
+│   ├── manager
+│   │   ├── Dashboard
+│   │   ├── Employees
+│   │   ├── Attendance
+│   │   ├── LeaveRequests
+│   │   ├── Tasks
+│   │   ├── Crops
+│   │   ├── Inventory
+│   │   ├── Expenses
+│   │   └── Reports
+│
+│   └── employee
+│       ├── Dashboard
+│       ├── Attendance
+│       ├── Leave
+│       ├── Tasks
+│       ├── Notifications
+│       └── Profile
+│
+├── services
+├── hooks
+├── store
+├── routes
+├── utils
+└── types
+Django Backend Structure
+backend
+│
+├── accounts
+├── farms
+├── employees
+├── attendance
+├── leaves
+├── crops
+├── inventory
+├── tasks
+├── expenses
+├── income
+├── reports
+├── notifications
+├── settings
+│
+├── media
+├── static
+│
+├── manage.py
+└── requirements.txt
+PostgreSQL Tables
+roles
+
+users
+
+farms
+farm_locations
+farm_documents
+
+employees
+
+attendance
+
+leave_requests
+
+performance_reviews
+
+crops
+crop_cycles
+crop_activities
+
+inventory
+inventory_transactions
+
+tasks
+task_comments
+task_images
+
+expense_categories
+expenses
+
+income_categories
+income
+
+notifications
+
+settings
+
+languages
+
+activity_logs
+Important Addition
+
+Add an activity_logs table.
+
+activity_logs
+
+id
+user_id
+action
+module
+description
+created_at
+
+
+
+
+
+
+
+
+
+
+
+
+Final Mobile App Architecture
+
+```
+
+```
+
+
+```
+Mobile App
+React Native + TypeScript
+
+Backend API
+Django + Django REST Framework
+
+Database
+PostgreSQL
+
+Authentication
+JWT + OTP
+
+Storage
+Cloudinary
+
+Notifications
+Firebase FCM
+```
+
+User Hierarchy
+
+```
+
+```
+
+
+```
+Owner (Main Admin)
+│
+├── Managers
+│
+└── Employees
+```
+
+React Native Mobile Structure
+
+```
+
+```
+
+
+```
+src/
+│
+├── assets/
+│   ├── images/
+│   ├── icons/
+│   └── translations/
+│
+├── components/
+│   ├── common/
+│   ├── forms/
+│   ├── cards/
+│   ├── charts/
+│   ├── tables/
+│   ├── modals/
+│   └── buttons/
+│
+├── navigation/
+│   ├── AuthNavigator.tsx
+│   ├── OwnerNavigator.tsx
+│   ├── ManagerNavigator.tsx
+│   └── EmployeeNavigator.tsx
+│
+├── screens/
+│
+│   ├── auth/
+│   │   ├── SplashScreen.tsx
+│   │   ├── LoginScreen.tsx
+│   │   ├── OTPScreen.tsx
+│   │   ├── ForgotPassword.tsx
+│   │   └── ResetPassword.tsx
+│
+│   ├── owner/
+│   │   ├── Dashboard/
+│   │   ├── Farms/
+│   │   ├── Managers/
+│   │   ├── Employees/
+│   │   ├── Attendance/
+│   │   ├── Salary/
+│   │   ├── Crops/
+│   │   ├── Inventory/
+│   │   ├── Tasks/
+│   │   ├── Expenses/
+│   │   ├── Income/
+│   │   ├── Reports/
+│   │   ├── Notifications/
+│   │   └── Settings/
+│
+│   ├── manager/
+│   │   ├── Dashboard/
+│   │   ├── Employees/
+│   │   ├── Attendance/
+│   │   ├── LeaveRequests/
+│   │   ├── Tasks/
+│   │   ├── Crops/
+│   │   ├── Inventory/
+│   │   ├── Expenses/
+│   │   └── Reports/
+│
+│   └── employee/
+│       ├── Dashboard/
+│       ├── Attendance/
+│       ├── Leave/
+│       ├── Tasks/
+│       ├── Notifications/
+│       └── Profile/
+│
+├── services/
+│   ├── api.ts
+│   ├── authService.ts
+│   ├── attendanceService.ts
+│   ├── taskService.ts
+│   ├── inventoryService.ts
+│   └── notificationService.ts
+│
+├── store/
+│   ├── store.ts
+│   ├── authSlice.ts
+│   ├── userSlice.ts
+│   ├── taskSlice.ts
+│   └── inventorySlice.ts
+│
+├── hooks/
+├── utils/
+├── constants/
+└── types/
+```
+
+Django Backend Structure
+
+```
+
+```
+
+
+```
+backend/
+│
+├── config/
+│
+├── apps/
+│
+│   ├── accounts/
+│   ├── farms/
+│   ├── employees/
+│   ├── attendance/
+│   ├── leaves/
+│   ├── crops/
+│   ├── inventory/
+│   ├── tasks/
+│   ├── expenses/
+│   ├── income/
+│   ├── reports/
+│   ├── notifications/
+│   └── settings/
+│
+├── media/
+├── static/
+├── uploads/
+│
+├── requirements.txt
+└── manage.py
+```
+
+Database Structure
+Keep your database structure. It is good.
+
+```
+
+```
+
+
+```
+roles
+users
+
+farms
+farm_locations
+farm_documents
+
+employees
+
+attendance
+leave_requests
+performance_reviews
+
+crops
+crop_cycles
+crop_activities
+
+inventory
+inventory_transactions
+
+tasks
+task_comments
+task_images
+
+expense_categories
+expenses
+
+income_categories
+income
+
+notifications
+
+settings
+languages
+
+activity_logs
+```
+
+Mobile Navigation
+Owner Bottom Navigation
+
+```
+
+```
+
+
+```
+Home
+Employees
+Tasks
+Reports
+Profile
+```
+
+Manager Bottom Navigation
+
+```
+
+```
+
+
+```
+Home
+Attendance
+Tasks
+Inventory
+Profile
+```
+
+Employee Bottom Navigation
+
+```
+
+```
+
+
+```
+Home
+Attendance
+My Tasks
+Notifications
+Profile
+```
+
+Development Order
+Do NOT build everything together.
+Phase 1
+
+```
+
+```
+
+
+```
+Authentication
+JWT
+Roles
+Navigation
+```
+
+Phase 2
+
+```
+
+```
+
+
+```
+Owner Dashboard
+Manager Dashboard
+Employee Dashboard
+```
+
+Phase 3
+
+```
+
+```
+
+
+```
+Attendance
+```
+
+Phase 4
+
+```
+
+```
+
+
+```
+Task Management
+```
+
+Phase 5
+
+```
+
+```
+
+
+```
+Employee Management
+```
+
+Phase 6
+
+```
+
+```
+
+
+```
+Inventory
+```
+
+Phase 7
+
+```
+
+```
+
+
+```
+Expenses
+Income
+```
+
+Phase 8
+
+```
+
+```
+
+
+```
+Crop Management
+```
+
+Phase 9
+
+```
+
+```
+
+
+```
+Reports
+```
+
+Phase 10
+
+```
+
+```
+
+
+```
+Notifications
+Cloudinary Uploads
+Activity Logs
+```
+
+i am sending the structure off this farm management system Application so give me details explanation how can i create application

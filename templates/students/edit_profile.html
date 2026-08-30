@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<section class="py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card card-professional p-5">
+                    <div class="mb-4">
+                        <h2 class="fw-bold">Edit Your Profile</h2>
+                        <p class="text-secondary">Keep your information up to date to get better job recommendations.</p>
+                    </div>
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="row g-4">
+                            {% for field in form %}
+                            <div class="{% if field.name == 'education' or field.name == 'experience' or field.name == 'skills' %}col-12{% else %}col-md-6{% endif %}">
+                                <label class="form-label small fw-bold">{{ field.label }}</label>
+                                {{ field }}
+                                {% if field.help_text %}
+                                    <div class="form-text small">{{ field.help_text }}</div>
+                                {% endif %}
+                                {% if field.errors %}
+                                    <div class="text-danger small">{{ field.errors }}</div>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <div class="mt-5 d-flex gap-3">
+                            <button type="submit" class="btn btn-primary-custom px-5 py-2">Save Changes</button>
+                            <a href="{% url 'student_dashboard' %}" class="btn btn-light px-5 py-2">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

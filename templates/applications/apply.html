@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<section class="py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="card card-professional p-5 text-center">
+                    <div class="mb-4">
+                        <div class="bg-primary bg-opacity-10 p-4 rounded-circle d-inline-block mb-3">
+                            <i class="fas fa-file-upload text-primary fa-2x"></i>
+                        </div>
+                        <h2 class="fw-bold">Submit Application</h2>
+                        {% if job %}
+                            <p class="text-secondary">Applying for: <span class="text-dark fw-bold">{{ job.title }}</span> at {{ job.company.name }}</p>
+                        {% else %}
+                            <p class="text-secondary">Applying for: <span class="text-dark fw-bold">{{ internship.title }}</span> at {{ internship.company.name }}</p>
+                        {% endif %}
+                    </div>
+
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="mb-4 text-start">
+                            <label class="form-label small fw-bold">Upload Resume (PDF only)</label>
+                            {{ form.resume }}
+                            <div class="form-text small">Please upload your latest resume to increase your chances.</div>
+                            {% if form.resume.errors %}
+                                <div class="text-danger small">{{ form.resume.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary-custom py-2 fw-bold">Submit Application</button>
+                            {% if job %}
+                                <a href="{% url 'job_detail' job.id %}" class="btn btn-light py-2">Cancel</a>
+                            {% else %}
+                                <a href="{% url 'internship_detail' internship.id %}" class="btn btn-light py-2">Cancel</a>
+                            {% endif %}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

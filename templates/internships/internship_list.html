@@ -1,0 +1,142 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="row mb-5">
+            <div class="col-md-8 mx-auto text-center">
+                <h2 class="fw-bold mb-3">Explore Internships</h2>
+                <p class="text-secondary">Find the best internship opportunities to kickstart your career.</p>
+                
+                <!-- Search Bar -->
+                <form method="get" class="mt-4">
+                    <div class="input-group card-professional p-1 bg-white overflow-hidden" style="border-radius: 50px;">
+                        <input type="text" name="q" class="form-control border-0 px-4 py-3" placeholder="Search by title, skills, or company..." value="{{ request.GET.q }}" style="box-shadow: none;">
+                        <button class="btn btn-primary-custom px-5 py-3" type="submit" style="border-radius: 40px;">
+                            <i class="fas fa-search me-2"></i> Search
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <!-- Sidebar Filters -->
+            <div class="col-lg-3">
+                <div class="card card-professional p-4 sticky-top" style="top: 100px;">
+                    <form method="get" id="filter-form">
+                        <h6 class="fw-bold mb-4">Filters</h6>
+                        
+                        <!-- Keep search query if filtering -->
+                        {% if request.GET.q %}
+                            <input type="hidden" name="q" value="{{ request.GET.q }}">
+                        {% endif %}
+
+                        <div class="mb-4">
+                            <label class="form-label small fw-bold">Internship Type</label>
+                            <div class="form-check small mb-2">
+                                <input class="form-check-input" type="checkbox" name="type" value="Full-time" id="ft" {% if 'Full-time' in request.GET.getlist %}checked{% endif %}>
+                                <label class="form-check-label" for="ft">Full-time</label>
+                            </div>
+                            <div class="form-check small mb-2">
+                                <input class="form-check-input" type="checkbox" name="type" value="Part-time" id="pt" {% if 'Part-time' in request.GET.getlist %}checked{% endif %}>
+                                <label class="form-check-label" for="pt">Part-time</label>
+                            </div>
+                            <div class="form-check small mb-2">
+                                <input class="form-check-input" type="checkbox" name="type" value="Remote" id="rm" {% if 'Remote' in request.GET.getlist %}checked{% endif %}>
+                                <label class="form-check-label" for="rm">Remote</label>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label small fw-bold">Stipend</label>
+                            <select class="form-select form-select-sm border-light" name="stipend">
+                                <option value="">All Ranges</option>
+                                <option value="Paid" {% if request.GET.stipend == 'Paid' %}selected{% endif %}>Paid</option>
+                                <option value="Unpaid" {% if request.GET.stipend == 'Unpaid' %}selected{% endif %}>Unpaid</option>
+                            </select>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-primary-custom w-100 btn-sm" type="submit">Apply Filters</button>
+                            <a href="{% url 'internship_list' %}" class="btn btn-light btn-sm">Clear All</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Internship Cards -->
+            <div class="col-lg-9">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <p class="text-secondary small mb-0">Showing {{ internships.count }} internships</p>
+                    <select class="form-select form-select-sm border-0 bg-transparent w-auto small fw-bold">
+                        <option>Most Recent</option>
+                        <option>Oldest</option>
+                    </select>
+                </div>
+
+                {% for internship in internships %}
+                <div class="card card-professional p-4 mb-4 animate-fade-in">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div class="d-flex align-items-center">
+                            <div class="bg-light p-3 rounded-3 me-3">
+                                <i class="fas fa-briefcase text-primary fa-lg"></i>
+                            </div>
+                            <div>
+                                <h5 class="fw-bold mb-1">
+                                    <a href="{% url 'internship_detail' internship.pk %}" class="text-dark text-decoration-none">{{ internship.title }}</a>
+                                    {% if internship.id in applied_internship_ids %}
+                                        <span class="badge bg-success bg-opacity-10 text-success ms-2 small fw-normal">
+                                            <i class="fas fa-check-circle me-1"></i> Applied
+                                        </span>
+                                    {% endif %}
+                                </h5>
+                                <p class="text-secondary small mb-0">
+                                    {{ internship.company.name }} • {{ internship.location }}
+                                    {% if internship.company.industry %}• <span class="text-primary">{{ internship.company.industry }}</span>{% endif %}
+                                </p>
+                            </div>
+                        </div>
+                        <button class="btn btn-light btn-sm rounded-circle"><i class="far fa-bookmark"></i></button>
+                    </div>
+                    
+                    <div class="d-flex flex-wrap gap-2 mb-4">
+                        {% if internship.category %}
+                            <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 fw-medium">{{ internship.category.name }}</span>
+                        {% endif %}
+                        <span class="badge bg-light text-primary px-3 py-2 fw-medium">{{ internship.internship_type }}</span>
+                        <span class="badge bg-light text-primary px-3 py-2 fw-medium">{{ internship.stipend }}</span>
+                        <span class="badge bg-light text-primary px-3 py-2 fw-medium">{{ internship.duration }}</span>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center">
+                        <p class="text-secondary small mb-0">Posted {{ internship.created_at|timesince }} ago</p>
+                        <a href="{% url 'internship_detail' internship.pk %}" class="btn btn-primary-custom btn-sm px-4">View Details</a>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center py-5">
+                    <i class="fas fa-search fa-3x mb-3 text-light"></i>
+                    <p class="text-secondary">No internships found matching your criteria.</p>
+                </div>
+                {% endfor %}
+
+                <!-- Pagination Placeholder -->
+                {% if is_paginated %}
+                <nav class="mt-5">
+                    <ul class="pagination justify-content-center">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item"><a class="page-link border-0 rounded-3 mx-1" href="?page={{ page_obj.previous_page_number }}">Previous</a></li>
+                        {% endif %}
+                        <li class="page-item active"><a class="page-link border-0 rounded-3 mx-1 bg-primary text-white" href="#">{{ page_obj.number }}</a></li>
+                        {% if page_obj.has_next %}
+                            <li class="page-item"><a class="page-link border-0 rounded-3 mx-1" href="?page={{ page_obj.next_page_number }}">Next</a></li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

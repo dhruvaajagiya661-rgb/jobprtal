@@ -1,0 +1,193 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Interview Prep | PortAL{% endblock %}
+
+{% block extra_css %}
+<style>
+    .prep-card {
+        transition: all 0.3s ease;
+        height: 100%;
+    }
+    .prep-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+    }
+    .difficulty-badge {
+        font-size: 11px;
+        padding: 3px 10px;
+        border-radius: 20px;
+    }
+    .stats-number {
+        font-size: 2rem;
+        font-weight: 800;
+        background: linear-gradient(135deg, var(--primary-color), var(--success-color));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    .resource-link {
+        transition: all 0.2s ease;
+        border-left: 3px solid transparent;
+    }
+    .resource-link:hover {
+        border-left-color: var(--primary-color);
+        background: #f8faff;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="py-5">
+    <div class="container">
+        <!-- Hero -->
+        <div class="text-center mb-5 animate-fade-in">
+            <h1 class="display-4 fw-bold mb-3">
+                <i class="fas fa-graduation-cap text-primary me-2"></i>
+                Interview <span class="text-primary">Preparation</span>
+            </h1>
+            <p class="lead text-secondary mx-auto" style="max-width: 600px;">
+                Master your interviews with curated questions, model answers, and learning resources
+            </p>
+            <div class="d-flex justify-content-center gap-4 mt-4">
+                <div class="text-center">
+                    <div class="stats-number">{{ total_questions }}</div>
+                    <div class="small text-secondary">Questions</div>
+                </div>
+                <div class="text-center">
+                    <div class="stats-number">{{ skills.count }}</div>
+                    <div class="small text-secondary">Skills</div>
+                </div>
+                <div class="text-center">
+                    <div class="stats-number">{{ career_paths.count }}</div>
+                    <div class="small text-secondary">Career Tracks</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter by Skill -->
+        <div class="mb-5">
+            <div class="d-flex align-items-center mb-4">
+                <div class="bg-info bg-opacity-10 p-3 rounded-3 me-3">
+                    <i class="fas fa-code text-info fa-lg"></i>
+                </div>
+                <div>
+                    <h4 class="fw-bold mb-0">Practice by Skill</h4>
+                    <p class="text-secondary small mb-0">Choose a skill to practice relevant interview questions</p>
+                </div>
+            </div>
+            <div class="row g-3">
+                {% for skill in skills %}
+                <div class="col-md-4 col-lg-3">
+                    <a href="{% url 'interview_questions_by_skill' skill.id %}" class="text-decoration-none">
+                        <div class="card card-professional prep-card p-3">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-primary bg-opacity-10 p-3 rounded-3 me-3">
+                                    <i class="fas fa-code text-primary"></i>
+                                </div>
+                                <div>
+                                    <h6 class="fw-bold mb-0">{{ skill.name }}</h6>
+                                    <span class="small text-secondary">{{ skill.question_count }} questions</span>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                {% empty %}
+                <div class="col-12 text-center py-4">
+                    <p class="text-secondary">No questions available yet.</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Filter by Career Path -->
+        <div class="mb-5">
+            <div class="d-flex align-items-center mb-4">
+                <div class="bg-success bg-opacity-10 p-3 rounded-3 me-3">
+                    <i class="fas fa-road text-success fa-lg"></i>
+                </div>
+                <div>
+                    <h4 class="fw-bold mb-0">Practice by Career Path</h4>
+                    <p class="text-secondary small mb-0">Questions tailored to your career track</p>
+                </div>
+            </div>
+            <div class="row g-3">
+                {% for path in career_paths %}
+                <div class="col-md-4 col-lg-3">
+                    <a href="{% url 'interview_questions_by_path' path.id %}" class="text-decoration-none">
+                        <div class="card card-professional prep-card p-3">
+                            <div class="d-flex align-items-center">
+                                <div style="width: 50px; height: 50px; background: {{ path.color }}15; border-radius: 12px;
+                                            display: flex; align-items: center; justify-content: center; color: {{ path.color }}; margin-right: 12px;">
+                                    <i class="fas {{ path.icon }}"></i>
+                                </div>
+                                <div>
+                                    <h6 class="fw-bold mb-0">{{ path.name }}</h6>
+                                    <span class="small text-secondary">{{ path.question_count }} questions</span>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                {% empty %}
+                <div class="col-12 text-center py-4">
+                    <p class="text-secondary">No career-specific questions yet.</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Random Practice -->
+        <div class="mb-4">
+            <div class="d-flex align-items-center mb-4">
+                <div class="bg-warning bg-opacity-10 p-3 rounded-3 me-3">
+                    <i class="fas fa-random text-warning fa-lg"></i>
+                </div>
+                <div>
+                    <h4 class="fw-bold mb-0">Quick Practice</h4>
+                    <p class="text-secondary small mb-0">Get a random set of questions to test yourself</p>
+                </div>
+            </div>
+            <a href="{% url 'practice_questions' %}?count=5" class="btn btn-primary-custom btn-lg">
+                <i class="fas fa-play me-2"></i> Start Practice Session
+            </a>
+            <a href="{% url 'practice_questions' %}?count=10" class="btn btn-outline-primary btn-lg ms-2">
+                <i class="fas fa-forward me-2"></i> Full Practice (10)
+            </a>
+        </div>
+
+        <!-- Recent Questions -->
+        {% if recent_questions %}
+        <div class="card card-professional p-4">
+            <h5 class="fw-bold mb-4"><i class="fas fa-clock me-2 text-primary"></i> Recently Added Questions</h5>
+            <div class="list-group list-group-flush">
+                {% for q in recent_questions %}
+                <div class="list-group-item px-0 py-3 border-0 border-bottom">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="flex-grow-1 me-3">
+                            <p class="mb-1 fw-medium">{{ q.question }}</p>
+                            <div class="d-flex gap-2 mt-2">
+                                <span class="badge bg-light text-secondary">{{ q.skill.name }}</span>
+                                <span class="difficulty-badge badge
+                                    {% if q.difficulty == 'beginner' %}bg-success bg-opacity-10 text-success
+                                    {% elif q.difficulty == 'intermediate' %}bg-warning bg-opacity-10 text-warning
+                                    {% else %}bg-danger bg-opacity-10 text-danger{% endif %}">
+                                    {{ q.get_difficulty_display }}
+                                </span>
+                                {% if q.career_path %}
+                                <span class="badge bg-info bg-opacity-10 text-info">{{ q.career_path.name }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <a href="{% url 'interview_questions_by_skill' q.skill.id %}" class="btn btn-sm btn-light mt-1">
+                            Practice <i class="fas fa-arrow-right ms-1"></i>
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

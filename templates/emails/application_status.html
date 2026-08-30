@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: 'Inter', -apple-system, sans-serif; background: #f1f5f9; margin: 0; padding: 0; }
+        .container { max-width: 600px; margin: 0 auto; padding: 40px 20px; }
+        .card { background: white; border-radius: 16px; padding: 40px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .logo { font-size: 28px; font-weight: 800; color: #2563eb; text-align: center; margin-bottom: 24px; }
+        h1 { font-size: 24px; color: #0f172a; margin-bottom: 8px; text-align: center; }
+        .status-badge { display: inline-block; padding: 8px 24px; border-radius: 24px; font-weight: 700; font-size: 18px; }
+        .status-applied { background: #eff6ff; color: #2563eb; }
+        .status-shortlisted { background: #f0fdf4; color: #16a34a; }
+        .status-accepted { background: #f0fdf4; color: #16a34a; }
+        .status-rejected { background: #fef2f2; color: #dc2626; }
+        .details { background: #f8fafc; border-radius: 12px; padding: 24px; margin: 24px 0; }
+        .detail-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #e2e8f0; }
+        .detail-label { color: #64748b; }
+        .detail-value { font-weight: 600; color: #0f172a; }
+        .btn { display: inline-block; padding: 12px 32px; background: #2563eb; color: white; text-decoration: none; border-radius: 8px; font-weight: 600; }
+        .footer { text-align: center; padding-top: 24px; color: #94a3b8; font-size: 13px; }
+        p { color: #475569; line-height: 1.7; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="logo">PortAL</div>
+
+            <h1>Application Update</h1>
+            <div style="text-align: center; margin: 16px 0;">
+                <span class="status-badge status-{{ status|lower }}">
+                    {{ status }} ✓
+                </span>
+            </div>
+
+            <p>Your application status has been updated for:</p>
+
+            <div class="details">
+                <div class="detail-row">
+                    <span class="detail-label">Position</span>
+                    <span class="detail-value">{{ job_title }}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Company</span>
+                    <span class="detail-value">{{ company_name }}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Status</span>
+                    <span class="detail-value">{{ status }}</span>
+                </div>
+                <div class="detail-row" style="border-bottom: none;">
+                    <span class="detail-label">Updated</span>
+                    <span class="detail-value">{{ updated_at|date:"M d, Y" }}</span>
+                </div>
+            </div>
+
+            {% if status == 'Shortlisted' %}
+            <p style="text-align: center; font-size: 16px;">
+                🎉 Congratulations! You've been shortlisted. The recruiter will contact you soon for the next steps.
+            </p>
+            {% elif status == 'Accepted' %}
+            <p style="text-align: center; font-size: 16px;">
+                🎉 Amazing! You've been accepted! Welcome aboard!
+            </p>
+            {% elif status == 'Rejected' %}
+            <p style="text-align: center; font-size: 16px;">
+                Don't give up! Keep applying and check out other opportunities that match your skills.
+            </p>
+            {% endif %}
+
+            <div style="text-align: center; margin: 32px 0;">
+                <a href="{{ dashboard_url }}" class="btn">View Dashboard →</a>
+            </div>
+
+            <div class="footer">
+                <p>© 2026 PortAL. Built for Career Excellence.</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

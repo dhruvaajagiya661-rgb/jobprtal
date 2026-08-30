@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<section class="py-5">
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-md-5">
+                <div class="card card-professional p-4">
+                    <div class="text-center mb-4">
+                        <h2 class="fw-bold">Welcome Back</h2>
+                        <p class="text-secondary">Log in to your PortAL account</p>
+                    </div>
+                    <form method="post">
+                        {% csrf_token %}
+                        {% for field in form %}
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold">{{ field.label }}</label>
+                                {{ field }}
+                                {% if field.errors %}
+                                    <div class="text-danger small">{{ field.errors }}</div>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                        <button type="submit" class="btn btn-primary-custom w-100 py-2 mt-2">Login</button>
+                    </form>
+                    <div class="text-center mt-4">
+                        <p class="small text-secondary">Don't have an account? <br>
+                            <a href="{% url 'register_student' %}" class="text-primary fw-bold text-decoration-none">Register as Student</a> or 
+                            <a href="{% url 'register_recruiter' %}" class="text-primary fw-bold text-decoration-none">Recruiter</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

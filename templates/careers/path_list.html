@@ -1,0 +1,170 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Career Paths | PortAL{% endblock %}
+
+{% block extra_css %}
+<style>
+    .path-card {
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    .path-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+    }
+    .path-icon {
+        width: 70px;
+        height: 70px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 16px;
+        font-size: 28px;
+    }
+    .milestone-timeline {
+        position: relative;
+        padding-left: 30px;
+    }
+    .milestone-timeline::before {
+        content: '';
+        position: absolute;
+        left: 10px;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: #e2e8f0;
+    }
+    .milestone-dot {
+        position: absolute;
+        left: 3px;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        border: 3px solid var(--primary-color);
+        background: white;
+    }
+    .match-badge {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+    }
+    .salary-highlight {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-weight: 800;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="py-5">
+    <div class="container">
+        <!-- Header -->
+        <div class="text-center mb-5 animate-fade-in">
+            <h1 class="display-4 fw-bold mb-3">Plan Your <span class="text-primary">Career Path</span></h1>
+            <p class="lead text-secondary mx-auto" style="max-width: 600px;">
+                Discover career tracks, explore skill requirements at every level, and chart your professional journey
+            </p>
+        </div>
+
+        {% if recommended_paths and user.is_student %}
+        <!-- Personalized Recommendations -->
+        <div class="mb-5">
+            <div class="d-flex align-items-center mb-4">
+                <div class="bg-primary bg-opacity-10 p-3 rounded-3 me-3">
+                    <i class="fas fa-star text-primary fa-lg"></i>
+                </div>
+                <div>
+                    <h4 class="fw-bold mb-0">Recommended for You</h4>
+                    <p class="text-secondary small mb-0">Based on your current skills and profile</p>
+                </div>
+            </div>
+            <div class="row g-4">
+                {% for item in recommended_paths|slice:":4" %}
+                <div class="col-md-3">
+                    <a href="{% url 'career_path_detail' item.path.id %}" class="text-decoration-none">
+                        <div class="card card-professional path-card p-4 h-100 position-relative">
+                            <div class="path-icon mb-3" style="background: {{ item.path.color }}15; color: {{ item.path.color }}">
+                                <i class="fas {{ item.path.icon }}"></i>
+                            </div>
+                            <h6 class="fw-bold mb-2">{{ item.path.name }}</h6>
+                            <div class="d-flex align-items-center mb-2">
+                                <div class="progress flex-grow-1" style="height: 6px;">
+                                    <div class="progress-bar" style="width: {{ item.match_score }}%; background: {{ item.path.color }}"
+                                         role="progressbar" aria-valuenow="{{ item.match_score }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                                <span class="ms-2 small fw-bold" style="color: {{ item.path.color }}">{{ item.match_score }}%</span>
+                            </div>
+                            <p class="small text-secondary mb-0">{{ item.path.description|truncatewords:12 }}</p>
+                            <span class="badge bg-light text-secondary mt-3">{{ item.path.milestones.count }} Levels</span>
+                        </div>
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- All Career Paths -->
+        <div class="d-flex align-items-center mb-4">
+            <div class="bg-success bg-opacity-10 p-3 rounded-3 me-3">
+                <i class="fas fa-road text-success fa-lg"></i>
+            </div>
+            <div>
+                <h4 class="fw-bold mb-0">All Career Paths</h4>
+                <p class="text-secondary small mb-0">{{ paths.count }} career tracks to explore</p>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            {% for path in paths %}
+            <div class="col-md-6 col-lg-4">
+                <a href="{% url 'career_path_detail' path.id %}" class="text-decoration-none">
+                    <div class="card card-professional path-card p-4 h-100">
+                        <div class="d-flex align-items-start mb-3">
+                            <div class="path-icon me-3" style="background: {{ path.color }}15; color: {{ path.color }}">
+                                <i class="fas {{ path.icon }}"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h5 class="fw-bold mb-1">{{ path.name }}</h5>
+                                <p class="text-secondary small mb-0">{{ path.description|truncatewords:15 }}</p>
+                            </div>
+                        </div>
+
+                        <div class="d-flex gap-3 mb-3">
+                            <div class="text-center px-3 py-2 bg-light rounded-3 flex-fill">
+                                <div class="fw-bold text-primary">${{ path.avg_salary_min }}K</div>
+                                <div class="small text-secondary">Min</div>
+                            </div>
+                            <div class="text-center px-3 py-2 bg-light rounded-3 flex-fill">
+                                <div class="fw-bold text-success">${{ path.avg_salary_max }}K</div>
+                                <div class="small text-secondary">Max</div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center mt-auto">
+                            <div class="d-flex gap-2">
+                                <span class="badge bg-primary bg-opacity-10 text-primary">
+                                    <i class="fas fa-layer-group me-1"></i>{{ path.milestone_count }} Levels
+                                </span>
+                                <span class="badge bg-info bg-opacity-10 text-info">
+                                    <i class="fas fa-question-circle me-1"></i>{{ path.question_count }} Q's
+                                </span>
+                            </div>
+                            <i class="fas fa-arrow-right text-primary"></i>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            {% empty %}
+            <div class="col-12 text-center py-5">
+                <i class="fas fa-map fa-4x mb-3 text-light"></i>
+                <p class="text-secondary">Career paths are being added. Check back soon!</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endblock %}

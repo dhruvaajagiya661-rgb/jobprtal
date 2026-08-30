@@ -1,0 +1,136 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Practice Session | PortAL{% endblock %}
+
+{% block extra_css %}
+<style>
+    .practice-progress {
+        height: 8px;
+        border-radius: 4px;
+        background: #e2e8f0;
+    }
+    .practice-progress .progress-bar {
+        border-radius: 4px;
+        transition: width 0.5s ease;
+    }
+    .question-number {
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        font-weight: 800;
+        font-size: 14px;
+    }
+    .reveal-btn {
+        transition: all 0.3s ease;
+    }
+    .reveal-btn:hover {
+        transform: translateY(-2px);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="animate-fade-in">
+                    <div class="d-flex align-items-center mb-4">
+                        <div class="bg-warning bg-opacity-10 p-3 rounded-3 me-3">
+                            <i class="fas fa-random text-warning fa-lg"></i>
+                        </div>
+                        <div>
+                            <h4 class="fw-bold mb-0">Practice Session</h4>
+                            <p class="text-secondary small mb-0">{{ questions|length }} random questions</p>
+                        </div>
+                    </div>
+                </div>
+
+                {% if questions %}
+                <!-- Progress Bar -->
+                <div class="progress practice-progress mb-4">
+                    <div class="progress-bar bg-primary" id="progressBar" style="width: {{ 100|add:questions|length|yesno:'0,0' }}%"></div>
+                </div>
+
+                {% for q in questions %}
+                <div class="card card-professional p-4 mb-4 question-block" data-index="{{ forloop.counter0 }}">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="d-flex align-items-center">
+                            <div class="question-number bg-primary bg-opacity-10 text-primary me-3">
+                                {{ forloop.counter }}
+                            </div>
+                            <span class="badge bg-light text-secondary">{{ q.skill.name }}</span>
+                            <span class="badge ms-2
+                                {% if q.difficulty == 'beginner' %}bg-success bg-opacity-10 text-success
+                                {% elif q.difficulty == 'intermediate' %}bg-warning bg-opacity-10 text-warning
+                                {% else %}bg-danger bg-opacity-10 text-danger{% endif %}">
+                                {{ q.get_difficulty_display }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <h5 class="fw-semibold mb-4">{{ q.question }}</h5>
+
+                    <div class="answer-section d-none">
+                        <div class="border-top pt-3 mt-3">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="fas fa-lightbulb text-warning me-2"></i>
+                                <span class="fw-bold small">Model Answer</span>
+                            </div>
+                            <p class="mb-0" style="color: #334155; line-height: 1.7;">
+                                {{ q.answer|default:"Think through this carefully. Consider edge cases and explain your reasoning step by step." }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-sm btn-outline-primary reveal-btn mt-3" onclick="toggleAnswer(this)">
+                        <i class="fas fa-eye me-1"></i> <span>Reveal Answer</span>
+                    </button>
+                </div>
+                {% endfor %}
+
+                <div class="text-center mt-4">
+                    <a href="{% url 'interview_prep_hub' %}" class="btn btn-outline-primary me-2">
+                        <i class="fas fa-arrow-left me-2"></i> Back to Prep Hub
+                    </a>
+                    <a href="{% url 'practice_questions' %}?count={{ questions|length }}" class="btn btn-primary-custom">
+                        <i class="fas fa-redo me-2"></i> New Session
+                    </a>
+                </div>
+
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-inbox fa-4x mb-3 text-light"></i>
+                    <h5 class="fw-bold">No Questions Found</h5>
+                    <p class="text-secondary mb-4">Try selecting different skills or check back later for more questions.</p>
+                    <a href="{% url 'interview_prep_hub' %}" class="btn btn-primary-custom">
+                        <i class="fas fa-arrow-left me-2"></i> Back to Prep Hub
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function toggleAnswer(btn) {
+        const section = btn.closest('.question-block').querySelector('.answer-section');
+        section.classList.toggle('d-none');
+        btn.querySelector('span').textContent = section.classList.contains('d-none') ? 'Reveal Answer' : 'Hide Answer';
+        btn.querySelector('i').className = section.classList.contains('d-none') ? 'fas fa-eye me-1' : 'fas fa-eye-slash me-1';
+
+        // Update progress
+        const total = document.querySelectorAll('.question-block').length;
+        const revealed = document.querySelectorAll('.answer-section:not(.d-none)').length;
+        const progress = (revealed / total) * 100;
+        document.getElementById('progressBar').style.width = progress + '%';
+    }
+</script>
+{% endblock %}

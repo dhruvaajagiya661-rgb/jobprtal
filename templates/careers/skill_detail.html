@@ -1,0 +1,168 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Learn {{ skill_name }} | PortAL{% endblock %}
+
+{% block extra_css %}
+<style>
+    .resource-card {
+        border-left: 4px solid var(--primary-color);
+        border-radius: 0 12px 12px 0;
+        transition: all 0.3s ease;
+    }
+    .resource-card:hover {
+        transform: translateX(5px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+    }
+    .difficulty-header {
+        display: flex;
+        align-items: center;
+    }
+    .difficulty-header .line {
+        flex-grow: 1;
+        height: 2px;
+        margin-left: 16px;
+        border-radius: 2px;
+    }
+    .badge-free {
+        background: #dcfce7;
+        color: #16a34a;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                {% if error %}
+                <!-- Error State -->
+                <div class="text-center py-5">
+                    <i class="fas fa-exclamation-circle fa-4x mb-3 text-warning"></i>
+                    <h4 class="fw-bold">Skill Not Found</h4>
+                    <p class="text-secondary mb-4">{{ error }}</p>
+                    <a href="{% url 'skill_gap_analysis' %}" class="btn btn-primary-custom">
+                        <i class="fas fa-arrow-left me-2"></i> Back to Analysis
+                    </a>
+                </div>
+                {% else %}
+                <!-- Header -->
+                <div class="animate-fade-in mb-5">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="bg-primary bg-opacity-10 p-3 rounded-3 me-3">
+                            <i class="fas fa-graduation-cap text-primary fa-lg"></i>
+                        </div>
+                        <div>
+                            <h2 class="fw-bold mb-1">Learn {{ learning_path.skill }}</h2>
+                            <p class="text-secondary mb-0">{{ learning_path.total_resources }} resources available</p>
+                        </div>
+                    </div>
+                    <a href="{% url 'skill_gap_analysis' %}" class="btn btn-sm btn-light">
+                        <i class="fas fa-arrow-left me-1"></i> Back to Analysis
+                    </a>
+                </div>
+
+                <!-- Learning Path by Difficulty -->
+                {% if learning_path.beginner %}
+                <div class="mb-4">
+                    <div class="difficulty-header mb-3">
+                        <span class="badge bg-success px-3 py-2">Beginner</span>
+                        <div class="line bg-success opacity-25"></div>
+                    </div>
+                    {% for resource in learning_path.beginner %}
+                    <a href="{{ resource.url }}" target="_blank" class="text-decoration-none">
+                        <div class="card card-professional resource-card p-3 mb-2">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-light p-2 rounded-3 me-3">
+                                    <i class="fas fa-{% if resource.resource_type == 'course' %}play-circle{% elif resource.resource_type == 'article' %}file-alt{% elif resource.resource_type == 'video' %}video{% else %}book{% endif %} text-primary"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <h6 class="fw-bold mb-0">{{ resource.title }}</h6>
+                                    <div class="d-flex gap-2 small text-secondary">
+                                        <span>{{ resource.get_resource_type_display }}</span>
+                                        {% if resource.is_free %}
+                                        <span class="badge-free px-2 rounded-pill fw-bold">Free</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <i class="fas fa-external-link-alt text-light ms-2"></i>
+                            </div>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                {% if learning_path.intermediate %}
+                <div class="mb-4">
+                    <div class="difficulty-header mb-3">
+                        <span class="badge bg-warning px-3 py-2">Intermediate</span>
+                        <div class="line bg-warning opacity-25"></div>
+                    </div>
+                    {% for resource in learning_path.intermediate %}
+                    <a href="{{ resource.url }}" target="_blank" class="text-decoration-none">
+                        <div class="card card-professional resource-card p-3 mb-2">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-light p-2 rounded-3 me-3">
+                                    <i class="fas fa-{% if resource.resource_type == 'course' %}play-circle{% elif resource.resource_type == 'article' %}file-alt{% elif resource.resource_type == 'video' %}video{% else %}book{% endif %} text-primary"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <h6 class="fw-bold mb-0">{{ resource.title }}</h6>
+                                    <div class="d-flex gap-2 small text-secondary">
+                                        <span>{{ resource.get_resource_type_display }}</span>
+                                        {% if resource.is_free %}
+                                        <span class="badge-free px-2 rounded-pill fw-bold">Free</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <i class="fas fa-external-link-alt text-light ms-2"></i>
+                            </div>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                {% if learning_path.advanced %}
+                <div class="mb-4">
+                    <div class="difficulty-header mb-3">
+                        <span class="badge bg-danger px-3 py-2">Advanced</span>
+                        <div class="line bg-danger opacity-25"></div>
+                    </div>
+                    {% for resource in learning_path.advanced %}
+                    <a href="{{ resource.url }}" target="_blank" class="text-decoration-none">
+                        <div class="card card-professional resource-card p-3 mb-2">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-light p-2 rounded-3 me-3">
+                                    <i class="fas fa-{% if resource.resource_type == 'course' %}play-circle{% elif resource.resource_type == 'article' %}file-alt{% elif resource.resource_type == 'video' %}video{% else %}book{% endif %} text-primary"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <h6 class="fw-bold mb-0">{{ resource.title }}</h6>
+                                    <div class="d-flex gap-2 small text-secondary">
+                                        <span>{{ resource.get_resource_type_display }}</span>
+                                        {% if resource.is_free %}
+                                        <span class="badge-free px-2 rounded-pill fw-bold">Free</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <i class="fas fa-external-link-alt text-light ms-2"></i>
+                            </div>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                {% if not learning_path.beginner and not learning_path.intermediate and not learning_path.advanced %}
+                <div class="text-center py-5">
+                    <i class="fas fa-inbox fa-4x mb-3 text-light"></i>
+                    <p class="text-secondary">No resources for this skill yet. Check back soon!</p>
+                </div>
+                {% endif %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: 'Inter', -apple-system, sans-serif; background: #f1f5f9; margin: 0; padding: 0; }
+        .container { max-width: 600px; margin: 0 auto; padding: 40px 20px; }
+        .card { background: white; border-radius: 16px; padding: 40px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .logo { font-size: 28px; font-weight: 800; color: #2563eb; text-align: center; margin-bottom: 24px; }
+        h1 { font-size: 24px; color: #0f172a; margin-bottom: 8px; }
+        .stats { display: flex; justify-content: center; gap: 24px; margin: 24px 0; }
+        .stat { text-align: center; }
+        .stat-number { font-size: 32px; font-weight: 800; }
+        .stat-label { color: #64748b; font-size: 13px; }
+        .stat-total { color: #2563eb; }
+        .stat-shortlisted { color: #16a34a; }
+        .stat-accepted { color: #2563eb; }
+        .app-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #e2e8f0; }
+        .app-title { font-weight: 600; color: #0f172a; }
+        .app-status { padding: 4px 12px; border-radius: 12px; font-size: 13px; font-weight: 600; }
+        .status-Applied { background: #eff6ff; color: #2563eb; }
+        .status-Shortlisted { background: #f0fdf4; color: #16a34a; }
+        .status-Accepted { background: #f0fdf4; color: #16a34a; }
+        .status-Rejected { background: #fef2f2; color: #dc2626; }
+        .btn { display: inline-block; padding: 12px 32px; background: #2563eb; color: white; text-decoration: none; border-radius: 8px; font-weight: 600; }
+        .footer { text-align: center; padding-top: 24px; color: #94a3b8; font-size: 13px; }
+        p { color: #475569; line-height: 1.7; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="logo">PortAL</div>
+
+            <h1>📊 Weekly Application Summary</h1>
+            <p>Here's your application status overview for this week, {{ user.username }}.</p>
+
+            <div class="stats">
+                <div class="stat">
+                    <div class="stat-number stat-total">{{ total_apps }}</div>
+                    <div class="stat-label">Total Apps</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number stat-shortlisted">{{ shortlisted }}</div>
+                    <div class="stat-label">Shortlisted</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number stat-accepted">{{ accepted }}</div>
+                    <div class="stat-label">Accepted</div>
+                </div>
+            </div>
+
+            <h3 style="margin-top: 32px;">Application Statuses</h3>
+            {% for app in applications %}
+            <div class="app-item">
+                <div>
+                    <div class="app-title">{{ app.job.title }}</div>
+                    <div style="font-size: 13px; color: #64748b;">{{ app.job.company.name }}</div>
+                </div>
+                <span class="app-status status-{{ app.status }}">{{ app.status }}</span>
+            </div>
+            {% endfor %}
+
+            <div style="text-align: center; margin: 32px 0;">
+                <a href="{{ dashboard_url }}" class="btn">View Full Dashboard →</a>
+            </div>
+
+            <div class="footer">
+                <p>© 2026 PortAL. Built for Career Excellence.</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

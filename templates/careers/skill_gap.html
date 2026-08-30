@@ -1,0 +1,219 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Skill Gap Analysis | PortAL{% endblock %}
+
+{% block extra_css %}
+<style>
+    .gap-card {
+        transition: all 0.3s ease;
+    }
+    .gap-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 12px 30px rgba(0,0,0,0.08);
+    }
+    .gap-bar {
+        height: 8px;
+        border-radius: 4px;
+        background: #e2e8f0;
+        overflow: hidden;
+    }
+    .gap-bar .fill {
+        height: 100%;
+        border-radius: 4px;
+        transition: width 1s ease;
+        background: linear-gradient(90deg, var(--primary-color), #7c3aed);
+    }
+    .resource-chip {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 12px;
+        background: #f0f5ff;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 500;
+        color: var(--primary-color);
+        text-decoration: none;
+        transition: all 0.2s ease;
+        margin: 2px;
+    }
+    .resource-chip:hover {
+        background: var(--primary-color);
+        color: white;
+    }
+    .stat-circle {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        margin: 0 auto;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="py-5">
+    <div class="container">
+        <div class="animate-fade-in">
+            <div class="d-flex align-items-center mb-4">
+                <div class="bg-danger bg-opacity-10 p-3 rounded-3 me-3">
+                    <i class="fas fa-search text-danger fa-lg"></i>
+                </div>
+                <div>
+                    <h2 class="fw-bold mb-1">Skill Gap Analysis</h2>
+                    <p class="text-secondary mb-0">Discover what skills you need to land your dream role</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Overview Stats -->
+        <div class="row g-4 mb-5">
+            <div class="col-md-3">
+                <div class="card card-professional p-4 text-center">
+                    <div class="stat-circle bg-primary bg-opacity-10 mb-3">
+                        <div class="fw-bold fs-4 text-primary">{{ analysis.student_skill_count }}</div>
+                    </div>
+                    <h6 class="fw-bold mb-0">Your Skills</h6>
+                    <p class="small text-secondary">Current skill count</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card card-professional p-4 text-center">
+                    <div class="stat-circle bg-warning bg-opacity-10 mb-3">
+                        <div class="fw-bold fs-4 text-warning">{{ analysis.total_missing_skills }}</div>
+                    </div>
+                    <h6 class="fw-bold mb-0">Gaps Found</h6>
+                    <p class="small text-secondary">Skills to learn</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card card-professional p-4 text-center">
+                    <div class="stat-circle bg-success bg-opacity-10 mb-3">
+                        <div class="fw-bold fs-4 text-success">{{ analysis.total_jobs_analyzed }}</div>
+                    </div>
+                    <h6 class="fw-bold mb-0">Jobs Analyzed</h6>
+                    <p class="small text-secondary">Compared against</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card card-professional p-4 text-center">
+                    <div class="stat-circle bg-info bg-opacity-10 mb-3">
+                        <div class="fw-bold fs-4 text-info">{{ analysis.skill_demand|length }}</div>
+                    </div>
+                    <h6 class="fw-bold mb-0">Top Demands</h6>
+                    <p class="small text-secondary">Most needed skills</p>
+                </div>
+            </div>
+        </div>
+
+        {% if analysis.missing_skills %}
+        <!-- Skill Gaps List -->
+        <div class="d-flex align-items-center mb-4">
+            <div class="bg-danger bg-opacity-10 p-3 rounded-3 me-3">
+                <i class="fas fa-exclamation-triangle text-danger fa-lg"></i>
+            </div>
+            <div>
+                <h4 class="fw-bold mb-0">Missing Skills by Demand</h4>
+                <p class="text-secondary small mb-0">Prioritize learning skills that appear most frequently in job requirements</p>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            {% for skill_name, data in analysis.missing_skills.items %}
+            <div class="col-md-6">
+                <div class="card card-professional gap-card p-4">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div>
+                            <h6 class="fw-bold mb-1">{{ skill_name }}</h6>
+                            <span class="small text-secondary">
+                                <i class="fas fa-briefcase me-1"></i> Required in {{ data.demand_count }} jobs ({{ data.demand_percentage }}%)
+                            </span>
+                        </div>
+                        <a href="{% url 'skill_gap_detail' skill_name %}" class="btn btn-sm btn-outline-primary">
+                            Learn <i class="fas fa-arrow-right ms-1"></i>
+                        </a>
+                    </div>
+                    <div class="gap-bar mt-2 mb-3">
+                        <div class="fill" style="width: {{ data.demand_percentage }}%"></div>
+                    </div>
+                    {% if data.resources %}
+                    <div class="mt-2">
+                        <div class="small text-secondary mb-1">Learning resources:</div>
+                        <div class="d-flex flex-wrap">
+                            {% for resource in data.resources %}
+                            <a href="{{ resource.url }}" target="_blank" class="resource-chip">
+                                <i class="fas fa-{% if resource.resource_type == 'course' %}play-circle{% elif resource.resource_type == 'article' %}file-alt{% else %}book{% endif %} me-1"></i>
+                                {{ resource.title|truncatechars:30 }}
+                            </a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <!-- No Gaps Found -->
+        <div class="card card-professional p-5 text-center">
+            <div class="bg-success bg-opacity-10 p-4 rounded-circle d-inline-block mx-auto mb-4">
+                <i class="fas fa-check-circle text-success fa-3x"></i>
+            </div>
+            <h4 class="fw-bold mb-2">No Skill Gaps Found!</h4>
+            <p class="text-secondary mb-4">
+                Your current skills cover all requirements for available positions.
+                Check back as new jobs are added!
+            </p>
+            <a href="{% url 'job_list' %}" class="btn btn-primary-custom">
+                <i class="fas fa-search me-2"></i> Browse Jobs
+            </a>
+        </div>
+        {% endif %}
+
+        <!-- Skill Demand Ranking -->
+        {% if analysis.skill_demand %}
+        <div class="card card-professional p-4 mt-5">
+            <h5 class="fw-bold mb-4"><i class="fas fa-chart-bar me-2 text-primary"></i> Top Skills in Demand</h5>
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="border-0">#</th>
+                            <th class="border-0">Skill</th>
+                            <th class="border-0">Jobs Requiring It</th>
+                            <th class="border-0">Demand Rate</th>
+                            <th class="border-0">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for skill_name, count in analysis.skill_demand %}
+                        <tr>
+                            <td class="fw-bold text-primary">{{ forloop.counter }}</td>
+                            <td class="fw-medium">{{ skill_name }}</td>
+                            <td>{{ count }} jobs</td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="progress flex-grow-1" style="height: 6px; max-width: 150px;">
+                                        <div class="progress-bar" style="width: {% widthratio count analysis.total_jobs_analyzed 100 %}%"></div>
+                                    </div>
+                                    <span class="ms-2 small">{% widthratio count analysis.total_jobs_analyzed 100 %}%</span>
+                                </div>
+                            </td>
+                            <td>
+                                <a href="{% url 'skill_gap_detail' skill_name %}" class="btn btn-sm btn-primary-custom">
+                                    Learn
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}
