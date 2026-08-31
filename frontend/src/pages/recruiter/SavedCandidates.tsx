@@ -37,7 +37,7 @@ const SavedCandidates: React.FC = () => {
     let cancelled = false;
     recruiterAPI
       .savedCandidates()
-      .then(r => { if (!cancelled) setCandidates((r.data || []) as SavedCandidate[]); })
+      .then(r => { if (!cancelled) setCandidates((Array.isArray(r.data) ? r.data : (r.data?.results || [])) as SavedCandidate[]); })
       .catch(err => {
         if (!cancelled) setError(extractApiError(err, 'Could not load your saved candidates.'));
       })

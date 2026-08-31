@@ -19,7 +19,7 @@ const SavedJobs: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    studentAPI.savedJobs().then(r => setJobs(r.data || [])).catch(() => {}).finally(() => setLoading(false));
+    studentAPI.savedJobs().then(r => setJobs(Array.isArray(r.data) ? r.data : (r.data?.results || []))).catch(() => {}).finally(() => setLoading(false));
   }, []);
 
   const handleUnsave = async (jobId: number) => {

@@ -40,7 +40,7 @@ const ManageInternships: React.FC = () => {
     Promise.all([recruiterAPI.internships(), recruiterAPI.dashboard()])
       .then(([listRes, dashRes]) => {
         if (cancelled) return;
-        setInternships((listRes.data || []) as Internship[]);
+        setInternships((Array.isArray(listRes.data) ? listRes.data : (listRes.data?.results || [])) as Internship[]);
         const rows = (dashRes.data?.roles || []) as {
           id: number;
           kind: string;

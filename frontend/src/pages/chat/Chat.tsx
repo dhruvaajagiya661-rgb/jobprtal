@@ -94,7 +94,7 @@ const Chat: React.FC = () => {
     let cancelled = false;
     chatAPI
       .conversations()
-      .then(r => { if (!cancelled) setConversations(r.data || []); })
+      .then(r => { if (!cancelled) setConversations(Array.isArray(r.data) ? r.data : (r.data?.results || [])); })
       .catch(err => { if (!cancelled) setError(extractApiError(err, 'Could not load conversations.')); })
       .finally(() => { if (!cancelled) setConvsLoading(false); });
     return () => { cancelled = true; };
@@ -108,7 +108,7 @@ const Chat: React.FC = () => {
     try {
       // chat_with() also marks the partner's messages as read server-side.
       const r = await chatAPI.chatWith(conv.partner_id);
-      setMessages((r.data || []) as ChatMessage[]);
+      setMessages((Array.isArray(r.data) ? r.data : (r.data?.results || [])) as ChatMessage[]);
       setConversations(prev =>
         prev.map(c => (c.partner_id === conv.partner_id ? { ...c, unread_count: 0 } : c))
       );

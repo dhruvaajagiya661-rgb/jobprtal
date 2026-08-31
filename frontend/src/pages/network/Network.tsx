@@ -99,10 +99,11 @@ const Network: React.FC = () => {
         connectionsAPI.sent(),
         connectionsAPI.suggestions(),
       ]);
-      setConnections(connRes.data || []);
-      setPending(pendingRes.data || []);
-      setSent(sentRes.data || []);
-      setSuggestions(sugRes.data || []);
+      const unwrap = (d: unknown) => Array.isArray(d) ? d : (d as Record<string, unknown>)?.results || [];
+      setConnections(unwrap(connRes.data) as Connection[]);
+      setPending(unwrap(pendingRes.data) as Connection[]);
+      setSent(unwrap(sentRes.data) as Connection[]);
+      setSuggestions(unwrap(sugRes.data) as Suggestion[]);
     } catch (err) {
       // Previously `catch { /* ignore */ }` — a failed load rendered as an
       // empty network with no indication anything had gone wrong.
@@ -147,7 +148,7 @@ const Network: React.FC = () => {
         setSuggestions(prev => prev.filter(s => s.id !== userId));
         toast.success('Invitation sent');
         const sentRes = await connectionsAPI.sent();
-        setSent(sentRes.data || []);
+        setSent((Array.isArray(sentRes.data) ? sentRes.data : (sentRes.data?.results || [])) as Connection[]);
       } catch (err) {
         toast.error(extractApiError(err, 'Could not send the invitation.'));
       }

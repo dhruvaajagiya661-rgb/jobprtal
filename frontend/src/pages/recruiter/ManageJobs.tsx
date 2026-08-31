@@ -40,8 +40,10 @@ const ManageJobs: React.FC = () => {
   useEffect(() => {
     Promise.all([recruiterAPI.jobs(), recruiterAPI.internships()])
       .then(([jobsResponse, internshipsResponse]) => {
-        const ownJobs = (jobsResponse.data || []).map((job: Job) => ({ ...job, postType: 'job' as const }));
-        const ownInternships = (internshipsResponse.data || []).map((internship: Internship) => ({
+        const jobsArr = Array.isArray(jobsResponse.data) ? jobsResponse.data : (jobsResponse.data?.results || []);
+        const internshipsArr = Array.isArray(internshipsResponse.data) ? internshipsResponse.data : (internshipsResponse.data?.results || []);
+        const ownJobs = jobsArr.map((job: Job) => ({ ...job, postType: 'job' as const }));
+        const ownInternships = internshipsArr.map((internship: Internship) => ({
           ...internship,
           postType: 'internship' as const,
         }));

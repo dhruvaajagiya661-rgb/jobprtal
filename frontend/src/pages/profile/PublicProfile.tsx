@@ -81,8 +81,8 @@ const PublicProfile: React.FC = () => {
         setConnectionStatus(r.data.connection_status || 'none');
         setIsFollowing(Boolean(r.data.is_following));
       }).catch(() => setProfile(null)),
-      endorsementsAPI.userEndorsements(userId).then(r => setEndorsements(r.data)).catch(() => {}),
-      recommendationsAPI.userRecommendations(userId).then(r => setRecommendations(r.data)).catch(() => {}),
+      endorsementsAPI.userEndorsements(userId).then(r => setEndorsements(Array.isArray(r.data) ? r.data : (r.data?.results || []))).catch(() => {}),
+      recommendationsAPI.userRecommendations(userId).then(r => setRecommendations(Array.isArray(r.data) ? r.data : (r.data?.results || []))).catch(() => {}),
     ]).finally(() => setLoading(false));
   }, [userId, currentUser]);
 

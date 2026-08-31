@@ -82,7 +82,7 @@ const Navbar: React.FC = () => {
     setNotifLoading(true);
     try {
       const r = await notificationsAPI.recent();
-      setNotifications(r.data || []);
+      setNotifications(Array.isArray(r.data) ? r.data : (r.data?.results || []));
     } catch {
       /* transient errors are ignored */
     } finally {

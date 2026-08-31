@@ -71,7 +71,7 @@ const Applicant: React.FC = () => {
         status: status || undefined,
         skill: skill || undefined,
       })
-      .then(r => setApplicants((r.data || []) as Applicant[]))
+      .then(r => setApplicants((Array.isArray(r.data) ? r.data : (r.data?.results || [])) as Applicant[]))
       .catch(() => {})
       .finally(() => setLoading(false));
   };
@@ -84,7 +84,7 @@ const Applicant: React.FC = () => {
     recruiterAPI
       .applicants({ job_id: jobId })
       .then(r => {
-        const data = (r.data || []) as Applicant[];
+        const data = (Array.isArray(r.data) ? r.data : (r.data?.results || [])) as Applicant[];
         const skills = Array.from(
           new Set(data.flatMap(a => a.student_skills || []))
         ).sort((a, b) => a.localeCompare(b));
@@ -100,7 +100,8 @@ const Applicant: React.FC = () => {
       .savedCandidates()
       .then(r => {
         if (cancelled) return;
-        setSavedIds(new Set(((r.data || []) as { student_id: number }[]).map(c => c.student_id)));
+        const savedArr = (Array.isArray(r.data) ? r.data : (r.data?.results || [])) as { student_id: number }[];
+        setSavedIds(new Set(savedArr.map(c => c.student_id)));
       })
       .catch(() => {});
     return () => { cancelled = true; };
