@@ -202,7 +202,7 @@ const JobList: React.FC = () => {
                     </span>
                     <span className="flex flex-wrap gap-2 mt-3">
                       <span className="chip bg-primary-50 text-primary-700 ring-1 ring-primary-200/70">{job.job_type}</span>
-                      {job.skills_required?.slice(0, 3).map(s => (
+                      {(Array.isArray(job.skills_required) ? job.skills_required : []).slice(0, 3).map(s => (
                         <span key={s.id} className="chip chip-idle">{s.name}</span>
                       ))}
                       {job.skills_required?.length > 3 && (

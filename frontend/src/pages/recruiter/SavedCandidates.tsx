@@ -194,7 +194,7 @@ const SavedCandidates: React.FC = () => {
 
                   {c.skills.length > 0 && (
                     <div className="flex flex-wrap gap-1.5 mb-3">
-                      {c.skills.slice(0, 8).map(s => (
+                      {(Array.isArray(c.skills) ? c.skills : []).slice(0, 8).map(s => (
                         <span key={s} className="inline-block text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">{s}</span>
                       ))}
                       {c.skills.length > 8 && (

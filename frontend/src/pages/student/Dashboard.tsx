@@ -253,7 +253,7 @@ const StudentDashboard: React.FC = () => {
             </div>
           ) : (
             <div className="divide-y divide-surface-100">
-              {data.applications.slice(0, 5).map((app, i) => {
+              {(Array.isArray(data.applications) ? data.applications : []).slice(0, 5).map((app, i) => {
                 const title = app.job?.title || app.internship?.title || 'Application';
                 const company = app.job?.company?.name || app.internship?.company?.name || '—';
                 const href = app.job ? `/jobs/${app.job.id}` : app.internship ? `/internships/${app.internship.id}` : null;

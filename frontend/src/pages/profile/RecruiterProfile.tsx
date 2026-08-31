@@ -87,7 +87,7 @@ const ListingCard: React.FC<{ listing: Listing; kind: 'job' | 'internship' }> = 
     </div>
     {listing.skills_required?.length > 0 && (
       <div className="flex flex-wrap gap-1.5 mt-3">
-        {listing.skills_required.slice(0, 5).map(s => (
+        {(Array.isArray(listing.skills_required) ? listing.skills_required : []).slice(0, 5).map(s => (
           <span key={s.id} className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">{s.name}</span>
         ))}
       </div>

@@ -249,7 +249,7 @@ const Applicant: React.FC = () => {
                   </p>
                   {app.student_skills.length > 0 && (
                     <div className="flex flex-wrap gap-1.5 mt-2">
-                      {app.student_skills.slice(0, 5).map(s => (
+                      {(Array.isArray(app.student_skills) ? app.student_skills : []).slice(0, 5).map(s => (
                         <span key={s} className="inline-block text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">{s}</span>
                       ))}
                       {app.student_skills.length > 5 && (

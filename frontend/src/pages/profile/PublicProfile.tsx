@@ -251,7 +251,7 @@ const PublicProfile: React.FC = () => {
                     <span className="text-sm text-gray-500 ml-2">· {e.count} endorsement{e.count !== 1 ? 's' : ''}</span>
                   </div>
                   <div className="flex -space-x-2">
-                    {e.endorsers.slice(0, 5).map(endorser => (
+                    {(Array.isArray(e.endorsers) ? e.endorsers : []).slice(0, 5).map(endorser => (
                       <div key={endorser.id} className="w-7 h-7 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center text-xs font-bold border-2 border-white" title={endorser.username || endorser.email}>
                         {(endorser.username || endorser.email)[0].toUpperCase()}
                       </div>
