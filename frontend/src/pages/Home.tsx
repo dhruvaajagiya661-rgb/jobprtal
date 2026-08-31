@@ -135,7 +135,7 @@ const Home: React.FC = () => {
                 <dt className="sr-only">{item.label}</dt>
                 <dd>
                   <span className="block text-white font-bold text-2xl">
-                    {item.value.toLocaleString()}
+                    {item.value?.toLocaleString() ?? '—'}
                   </span>
                   <span className="block text-white/50 text-sm">{item.label}</span>
                 </dd>
