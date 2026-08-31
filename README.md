@@ -170,3 +170,4 @@ that is deliberate. Set a real one.
 - Follows PEP8 standards.
 - Modular app structure for scalability.
 - Secure file handling for resumes and logos.
+# jobprtal
