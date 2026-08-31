@@ -16,18 +16,21 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
-COPY requirements.txt .
+# Install Python dependencies
+COPY backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Stage 2: Development
 FROM base as develop
 
-COPY . .
+COPY backend/ /app/backend/
+COPY frontend/ /app/frontend/
+COPY .env* /app/
 ENV DEBUG=1
 
 EXPOSE 8000
 
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+CMD ["python", "backend/manage.py", "runserver", "0.0.0.0:8000"]
 
 # Stage 3: Production
 FROM base as production
@@ -36,13 +39,16 @@ FROM base as production
 RUN addgroup --system --gid 1001 appgroup && \
     adduser --system --uid 1001 appuser
 
-COPY --chown=appuser:appgroup . .
+COPY backend/ /app/backend/
+COPY frontend/ /app/frontend/
+COPY .env* /app/
+RUN chown -R appuser:appgroup /app
 
 # Collect static files
-RUN python manage.py collectstatic --noinput
+RUN cd /app/backend && python manage.py collectstatic --noinput
 
 # Create directory for logs
-RUN mkdir -p /app/logs && chown -R appuser:appgroup /app/logs
+RUN mkdir -p /app/backend/logs && chown -R appuser:appgroup /app/backend/logs
 
 USER appuser
 

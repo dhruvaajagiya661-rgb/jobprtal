@@ -7,8 +7,77 @@ import traceback
 from django.http import JsonResponse
 from django.conf import settings
 from django.core.exceptions import PermissionDenied, ValidationError
+from django.db import connection
+from django.db.backends.signals import connection_created
 
 logger = logging.getLogger(__name__)
+
+
+# ---------------------------------------------------------------------------
+# RLS Context Middleware - sets PostgreSQL session variables for Row Level
+# Security policies so that students/recruiters only see their own data.
+# ---------------------------------------------------------------------------
+def _set_rls_context(sender, connection, **kwargs):
+    """Set app.current_user_id and app.current_user_role on every new DB
+    connection so RLS policies can reference them."""
+    # We store the values on the connection object so the signal handler
+    # can pick them up.  The middleware writes to connection.rls_* before
+    # any queries fire.
+    user_id = getattr(connection, '_rls_user_id', None)
+    user_role = getattr(connection, '_rls_user_role', None)
+
+    if user_id is not None and user_role is not None:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT set_config('app.current_user_id', %s, true)",
+                [str(user_id)],
+            )
+            cursor.execute(
+                "SELECT set_config('app.current_user_role', %s, true)",
+                [user_role],
+            )
+
+
+connection_created.connect(_set_rls_context)
+
+
+class RLSContextMiddleware:
+    """On each request, store the current user's id and role on the DB
+    connection so that RLS policies in PostgreSQL can filter rows.
+
+    Add this middleware *before* any middleware that touches the DB, e.g.
+    right after AuthenticationMiddleware in settings.MIDDLEWARE.
+    """
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        # Default: no user context (anonymous requests see nothing via RLS
+        # unless a permissive policy allows it).
+        user_id = None
+        user_role = None
+
+        if hasattr(request, 'user') and request.user.is_authenticated:
+            user_id = request.user.id
+            if getattr(request.user, 'is_recruiter', False):
+                user_role = 'recruiter'
+            elif getattr(request.user, 'is_student', False):
+                user_role = 'student'
+            else:
+                user_role = 'admin'
+
+        # Store on the connection so the signal handler can pick it up
+        connection._rls_user_id = user_id
+        connection._rls_user_role = user_role
+
+        response = self.get_response(request)
+
+        # Cleanup
+        connection._rls_user_id = None
+        connection._rls_user_role = None
+
+        return response
 
 
 class ErrorHandlingMiddleware:

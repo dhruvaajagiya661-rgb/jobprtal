@@ -64,8 +64,8 @@ services:
       redis:
         condition: service_healthy
     volumes:
-      - ./media:/app/media
-      - static_volume:/app/staticfiles
+      - ./backend/media:/app/backend/media
+      - static_volume:/app/backend/staticfiles
     networks:
       - portal_network
 
@@ -90,7 +90,8 @@ services:
       db:
         condition: service_healthy
     volumes:
-      - .:/app
+      - ./backend:/app/backend
+      - ./frontend:/app/frontend
     networks:
       - portal_network
 
@@ -101,7 +102,7 @@ services:
       dockerfile: Dockerfile
       target: production
     container_name: portal_celery
-    command: celery -A portal worker -l info
+    command: cd /app/backend && celery -A portal worker -l info
     environment:
       - DEBUG=0
       - SECRET_KEY=${SECRET_KEY:-django-insecure-change-this-in-production}
@@ -115,7 +116,7 @@ services:
       - redis
       - db
     volumes:
-      - .:/app
+      - ./backend:/app/backend
     networks:
       - portal_network
 
@@ -126,7 +127,7 @@ services:
       dockerfile: Dockerfile
       target: production
     container_name: portal_celery_beat
-    command: celery -A portal beat -l info
+    command: cd /app/backend && celery -A portal beat -l info
     environment:
       - DEBUG=0
       - SECRET_KEY=${SECRET_KEY:-django-insecure-change-this-in-production}
@@ -140,7 +141,7 @@ services:
       - redis
       - db
     volumes:
-      - .:/app
+      - ./backend:/app/backend
     networks:
       - portal_network
 
@@ -151,7 +152,7 @@ services:
       dockerfile: Dockerfile
       target: production
     container_name: portal_flower
-    command: celery -A portal flower --port=5555
+    command: cd /app/backend && celery -A portal flower --port=5555
     ports:
       - "5555:5555"
     environment:
@@ -167,7 +168,7 @@ services:
       - redis
       - db
     volumes:
-      - .:/app
+      - ./backend:/app/backend
     networks:
       - portal_network
 
@@ -180,8 +181,8 @@ services:
       - "443:443"
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
-      - static_volume:/app/staticfiles
-      - ./media:/app/media
+      - static_volume:/app/backend/staticfiles
+      - ./backend/media:/app/backend/media
     depends_on:
       - web
     networks:
