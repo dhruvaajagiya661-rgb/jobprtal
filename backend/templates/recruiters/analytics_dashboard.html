@@ -489,7 +489,7 @@
 document.addEventListener('DOMContentLoaded', function() {
     // Monthly Trends Line Chart
     const trendCtx = document.getElementById('trendChart').getContext('2d');
-    const months = {{ monthly_trends|safe|default:'[]' }};
+    const months = JSON.parse({{ monthly_trends|safe }});
 
     if (months.length > 0) {
         new Chart(trendCtx, {
