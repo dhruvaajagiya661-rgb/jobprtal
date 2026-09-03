@@ -49,16 +49,23 @@ const Home: React.FC = () => {
 
   useEffect(() => {
     jobsAPI.list({ ordering: '-created_at' }).then(r => {
-      const jobs = r.data.results || r.data || [];
+      const raw = r.data;
+      const jobs = Array.isArray(raw) ? raw : Array.isArray(raw?.results) ? raw.results : [];
       if (jobs.length > 0) setHeroJob(jobs[Math.floor(Math.random() * jobs.length)]);
       setFeaturedJobs(jobs.slice(0, 6));
     }).catch(() => {});
 
     internshipsAPI.featured().then(r => {
-      setFeaturedInternships(r.data?.results || r.data || []);
+      const raw = r.data;
+      setFeaturedInternships(Array.isArray(raw) ? raw : Array.isArray(raw?.results) ? raw.results : []);
     }).catch(() => {});
 
-    platformAPI.stats().then(r => setStats(r.data)).catch(() => {});
+    platformAPI.stats().then(r => {
+      const raw = r.data;
+      if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
+        setStats(raw);
+      }
+    }).catch(() => {});
   }, []);
 
   const categories = (stats?.categories ?? []).slice(0, 4);

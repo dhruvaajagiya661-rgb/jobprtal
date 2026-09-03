@@ -52,3 +52,6 @@ Thumbs.db
 # Coverage
 htmlcov/
 .coverage
+
+.vercel
+.env*

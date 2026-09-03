@@ -238,7 +238,7 @@ const RecruiterDashboard: React.FC = () => {
   const applicants = data.total_applicants || 0;
   const openRoles = data.jobs_count + data.internships_count;
 
-  const inflow = (data.monthly_applicants ?? []).map(m => ({ label: m.month, value: m.count }));
+  const inflow = (Array.isArray(data.monthly_applicants) ? data.monthly_applicants : []).map(m => ({ label: m.month, value: m.count }));
   const inflowTotal = inflow.reduce((sum, p) => sum + p.value, 0);
 
   // Of everyone who has been triaged, how many moved forward rather than out.
@@ -383,7 +383,7 @@ const RecruiterDashboard: React.FC = () => {
             ) : (
               <>
                 <div className="divide-y divide-surface-100">
-                  {data.needs_review.map((item, i) => (
+                  {(Array.isArray(data.needs_review) ? data.needs_review : []).map((item, i) => (
                     <div key={item.id} className="reveal" style={{ '--i': i } as React.CSSProperties}>
                       <div className="flex items-center gap-3.5 py-3">
                         <span className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary-500 to-accent-500 text-white text-sm font-extrabold flex items-center justify-center shrink-0 shadow-sm shadow-primary-500/25">

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { feedAPI } from '../../api/client';
+import { asArray } from '../../utils/apiHelpers';
 import { useAuth } from '../../context/AuthContext';
 
 interface Author {
@@ -302,7 +303,7 @@ const NewsFeed: React.FC = () => {
       } else {
         response = await feedAPI.list();
       }
-      setPosts(response.data.results || response.data || []);
+      setPosts(asArray(response.data));
     } catch { /* ignore */ }
     setLoading(false);
   }, [activeTab]);

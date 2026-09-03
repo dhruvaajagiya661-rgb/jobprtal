@@ -20,9 +20,18 @@ class ErrorBoundary extends React.Component<Props, State> {
   }
 
   static getDerivedStateFromError(error: unknown): State {
+    const msg = error instanceof Error ? error.message : 'Something went wrong';
+    // Detect the classic "API returned HTML instead of JSON" pattern that
+    // occurs when the backend is unreachable (e.g. Vercel frontend without
+    // a deployed backend).
+    const isApiOffline =
+      msg.includes('map is not a function') ||
+      msg.includes('API returned HTML instead of JSON');
     return {
       hasError: true,
-      message: error instanceof Error ? error.message : 'Something went wrong',
+      message: isApiOffline
+        ? 'The backend server appears to be offline or unreachable. Please ensure the API server is running and accessible.'
+        : msg,
     };
   }
 

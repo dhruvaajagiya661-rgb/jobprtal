@@ -38,7 +38,7 @@ services:
     networks:
       - portal_network
 
-  # Django Application
+  # Main Application (Django + nginx + built frontend)
   web:
     build:
       context: .
@@ -46,7 +46,7 @@ services:
       target: production
     container_name: portal_web
     ports:
-      - "8000:8000"
+      - "80:80"
     environment:
       - DEBUG=0
       - SECRET_KEY=${SECRET_KEY:-django-insecure-change-this-in-production}
@@ -57,27 +57,27 @@ services:
       - DB_PORT=5432
       - REDIS_URL=redis://redis:6379/0
       - ALLOWED_HOSTS=${ALLOWED_HOSTS:-localhost,127.0.0.1}
-      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS:-http://localhost:3000}
+      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS:-http://localhost,http://localhost:80}
+      - CSRF_TRUSTED_ORIGINS=${CSRF_TRUSTED_ORIGINS:-http://localhost,http://localhost:80}
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_healthy
     volumes:
-      - ./backend/media:/app/backend/media
-      - static_volume:/app/backend/staticfiles
+      - media_data:/app/backend/media
     networks:
       - portal_network
 
-  # Development Server
+  # Development Server (with hot reload)
   web-dev:
     build:
       context: .
       dockerfile: Dockerfile
-      target: develop
+      target: production
     container_name: portal_web_dev
     ports:
-      - "8000:8000"
+      - "80:80"
     environment:
       - DEBUG=1
       - SECRET_KEY=dev-secret-key
@@ -86,12 +86,14 @@ services:
       - DB_PASSWORD=postgres
       - DB_HOST=db
       - DB_PORT=5432
+      - ALLOWED_HOSTS=localhost,127.0.0.1
+      - CORS_ALLOWED_ORIGINS=http://localhost,http://localhost:80
     depends_on:
       db:
         condition: service_healthy
     volumes:
       - ./backend:/app/backend
-      - ./frontend:/app/frontend
+      - ./frontend/dist:/app/frontend/dist
     networks:
       - portal_network
 
@@ -172,26 +174,10 @@ services:
     networks:
       - portal_network
 
-  # Nginx reverse proxy
-  nginx:
-    image: nginx:alpine
-    container_name: portal_nginx
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
-      - static_volume:/app/backend/staticfiles
-      - ./backend/media:/app/backend/media
-    depends_on:
-      - web
-    networks:
-      - portal_network
-
 volumes:
   postgres_data:
   redis_data:
-  static_volume:
+  media_data:
 
 networks:
   portal_network:

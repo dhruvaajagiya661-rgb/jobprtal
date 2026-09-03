@@ -33,11 +33,19 @@ ALLOWED_HOSTS = (
 )
 
 if not DEBUG:
-    SECURE_SSL_REDIRECT = os.getenv("SECURE_SSL_REDIRECT", "True") == "True"
-    SECURE_HSTS_SECONDS = 31536000
-    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-    SECURE_HSTS_PRELOAD = True
+    # Production always sits behind a TLS-terminating proxy (Render's load
+    # balancer/Cloudflare, or nginx), so Django receives plain HTTP plus an
+    # X-Forwarded-Proto header. Trust it to learn the real scheme — without
+    # this, SECURE_SSL_REDIRECT redirects http -> https to the very same URL
+    # forever (a 301 loop), because every request looks like "http" to Django.
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+    # Opt-in via env, and only safe because of SECURE_PROXY_SSL_HEADER above.
+    SECURE_SSL_REDIRECT = os.getenv("SECURE_SSL_REDIRECT", "False") == "True"
+    SECURE_HSTS_SECONDS = int(os.getenv("SECURE_HSTS_SECONDS", "0"))
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = SECURE_HSTS_SECONDS > 0
+    SECURE_HSTS_PRELOAD = SECURE_HSTS_SECONDS > 0
 else:
+    SECURE_PROXY_SSL_HEADER = None
     SECURE_SSL_REDIRECT = False
     SECURE_HSTS_SECONDS = 0
     SECURE_HSTS_INCLUDE_SUBDOMAINS = False

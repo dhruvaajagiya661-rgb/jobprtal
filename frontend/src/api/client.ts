@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE = '/api';
+const API_BASE = import.meta.env.VITE_API_BASE || '/api';
 
 const apiClient = axios.create({
   baseURL: API_BASE,
@@ -101,6 +101,37 @@ apiClient.interceptors.request.use(
     return config;
   },
   (error) => Promise.reject(error)
+);
+
+// Response interceptor: detect HTML responses masquerading as API data.
+// When Vercel's SPA rewrite catches /api/* requests, it returns index.html
+// (text/html) instead of JSON. This turns every API call into an HTML string,
+// which crashes .map() calls throughout the app. We reject early so .catch()
+// handlers run their error states instead of the UI trying to iterate a string.
+apiClient.interceptors.response.use(
+  (response) => {
+    const contentType = String(response.headers?.['content-type'] || '');
+    if (contentType.includes('text/html')) {
+      console.warn('[API] Received HTML instead of JSON from', response.config?.url);
+      return Promise.reject(new Error(
+        'API returned HTML instead of JSON. The backend may not be configured.'
+      ));
+    }
+    return response;
+  },
+  async (error) => {
+    // If the server returned HTML with a 2xx status (Vercel SPA rewrite),
+    // reject with a descriptive error instead of letting the caller crash.
+    if (error.response?.data && typeof error.response.data === 'string' &&
+        error.response.data.includes('<!DOCTYPE') &&
+        String(error.response.headers?.['content-type'] || '').includes('text/html')) {
+      console.warn('[API] Received HTML from', error.config?.url);
+      return Promise.reject(new Error(
+        'API returned HTML instead of JSON. The backend may not be configured.'
+      ));
+    }
+    return Promise.reject(error);
+  }
 );
 
 // Response interceptor: handle token refresh

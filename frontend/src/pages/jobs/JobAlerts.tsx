@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { jobAlertsAPI } from '../../api/client';
+import { asArray } from '../../utils/apiHelpers';
 import { extractApiError } from '../../utils/errors';
 import { useToast } from '../../context/ToastContext';
 import PageHero from '../../components/ui/PageHero';
@@ -32,7 +33,7 @@ const JobAlerts: React.FC = () => {
     setLoading(true);
     jobAlertsAPI
       .list()
-      .then(r => setAlerts(r.data.results || r.data || []))
+      .then(r => setAlerts(asArray(r.data)))
       .catch(() => {})
       .finally(() => setLoading(false));
   };

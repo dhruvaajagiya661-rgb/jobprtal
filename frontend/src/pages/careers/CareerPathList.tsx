@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { careersAPI } from '../../api/client';
+import { asArray } from '../../utils/apiHelpers';
 import { useAuth } from '../../context/AuthContext';
 import PageHero from '../../components/ui/PageHero';
 import useSeo from '../../hooks/useSeo';
@@ -32,7 +33,7 @@ const CareerPathList: React.FC = () => {
 
   useEffect(() => {
     careersAPI.paths()
-      .then(r => setPaths(r.data.results || r.data || []))
+      .then(r => setPaths(asArray(r.data)))
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);

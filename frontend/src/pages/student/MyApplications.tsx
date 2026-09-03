@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { studentAPI, applicationsAPI } from '../../api/client';
+import { asArray } from '../../utils/apiHelpers';
 import { extractApiError } from '../../utils/errors';
 import { useToast } from '../../context/ToastContext';
 
@@ -28,7 +29,7 @@ const MyApplications: React.FC = () => {
 
   useEffect(() => {
     studentAPI.applications().then(r => {
-      setApplications(r.data.results || r.data || []);
+      setApplications(asArray(r.data));
     }).catch(() => {}).finally(() => setLoading(false));
   }, []);
 

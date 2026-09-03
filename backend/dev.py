@@ -26,7 +26,8 @@ import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
-FRONTEND = ROOT / "frontend"
+# The launcher lives in backend/; the SPA lives at the repo root.
+FRONTEND = ROOT.parent / "frontend"
 IS_WINDOWS = os.name == "nt"
 
 API_PORT = 8000
@@ -140,8 +141,14 @@ def preflight(strict: bool = True) -> bool:
     if env.exists():
         ok(".env present")
     else:
+        # Django loads backend/.env, but the checked-in env lives at the repo
+        # root (used by docker-compose too) — copy it into place if possible.
         example = ROOT / ".env.example"
-        if example.exists():
+        root_env = ROOT.parent / ".env"
+        if root_env.exists():
+            shutil.copy(root_env, env)
+            ok(".env copied from repo root")
+        elif example.exists():
             shutil.copy(example, env)
             ok(".env created from .env.example")
         else:

@@ -1,7 +1,29 @@
-# Production Dockerfile for portAL
+# =============================================================================
+# Multi-stage Dockerfile for PortAL
+# Stage 1 – Build the React/Vite frontend
+# Stage 2 – Install Python dependencies for the Django backend
+# Stage 3 – Production image: nginx serves the SPA + proxies API to Django
+# =============================================================================
 
-# Stage 1: Base image
-FROM python:3.10-slim as base
+# ---------------------------------------------------------------------------
+# Stage 1: Build frontend
+# ---------------------------------------------------------------------------
+FROM node:20-alpine AS frontend-build
+
+WORKDIR /app/frontend
+
+# Copy source first so npm can resolve platform-specific optional deps
+COPY frontend/ ./
+RUN rm -rf node_modules package-lock.json && npm install
+
+# Build
+RUN npm run build
+
+
+# ---------------------------------------------------------------------------
+# Stage 2: Python dependencies (cached layer)
+# ---------------------------------------------------------------------------
+FROM python:3.12-slim AS python-deps
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
@@ -11,54 +33,66 @@ ENV PYTHONUNBUFFERED=1 \
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     libpq-dev \
-    curl \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Install Python dependencies
-COPY backend/requirements.txt .
+COPY backend/requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Stage 2: Development
-FROM base as develop
 
-COPY backend/ /app/backend/
-COPY frontend/ /app/frontend/
-COPY .env* /app/
-ENV DEBUG=1
-
-EXPOSE 8000
-
-CMD ["python", "backend/manage.py", "runserver", "0.0.0.0:8000"]
-
+# ---------------------------------------------------------------------------
 # Stage 3: Production
-FROM base as production
+# ---------------------------------------------------------------------------
+FROM python:3.12-slim AS production
 
-# Create non-root user
-RUN addgroup --system --gid 1001 appgroup && \
-    adduser --system --uid 1001 appuser
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1
 
+# Install runtime deps only
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libpq5 \
+    curl \
+    nginx \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy installed Python packages from the deps stage
+COPY --from=python-deps /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
+COPY --from=python-deps /usr/local/bin /usr/local/bin
+
+WORKDIR /app
+
+# Copy backend code
 COPY backend/ /app/backend/
-COPY frontend/ /app/frontend/
-COPY .env* /app/
-RUN chown -R appuser:appgroup /app
 
-# Collect static files
+# Copy built frontend
+COPY --from=frontend-build /app/frontend/dist /app/frontend/dist
+
+# Copy nginx config
+COPY nginx.conf /etc/nginx/nginx.conf
+
+# Collect Django static files (DEBUG=True and a dummy SECRET_KEY are only
+# needed at build time so collectstatic can import settings without error;
+# the real values come from docker-compose environment at runtime).
+ENV DEBUG=True
+ENV SECRET_KEY=build-time-placeholder
 RUN cd /app/backend && python manage.py collectstatic --noinput
 
-# Create directory for logs
-RUN mkdir -p /app/backend/logs && chown -R appuser:appgroup /app/backend/logs
+# Create non-root user for Django
+RUN addgroup --system --gid 1001 appgroup && \
+    adduser --system --uid 1001 --ingroup appgroup appuser && \
+    chown -R appuser:appgroup /app/backend/media /app/backend/logs 2>/dev/null || true && \
+    mkdir -p /app/backend/logs /app/backend/media && \
+    chown -R appuser:appgroup /app/backend/logs /app/backend/media
 
-USER appuser
+# Create nginx temp dirs and fix permissions
+RUN mkdir -p /var/cache/nginx /var/log/nginx /var/run && \
+    chown -R appuser:appgroup /var/cache/nginx /var/log/nginx /var/run
 
-EXPOSE 8000
+# Copy the startup script
+COPY docker-start.sh /docker-start.sh
+RUN chmod +x /docker-start.sh
 
-CMD ["gunicorn", "portal.wsgi:application", \
-     "--bind", "0.0.0.0:8000", \
-     "--workers", "4", \
-     "--worker-class", "gunicorn.workers.gtornado.TornadoWorker", \
-     "--max-requests", "1000", \
-     "--timeout", "30", \
-     "--access-logfile", "-", \
-     "--error-logfile", "-"]
+EXPOSE 80
+
+ENTRYPOINT ["/bin/bash", "/docker-start.sh"]

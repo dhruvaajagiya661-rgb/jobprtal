@@ -92,7 +92,7 @@ const StudentDashboard: React.FC = () => {
 
   const completion = completionFromProfile(data.profile);
   const hasResume = !!data.profile?.resume;
-  const activity = (data.monthly_activity ?? []).map(m => ({ label: m.month, value: m.count }));
+  const activity = (Array.isArray(data.monthly_activity) ? data.monthly_activity : []).map(m => ({ label: m.month, value: m.count }));
   const activityTotal = activity.reduce((sum, p) => sum + p.value, 0);
   const total = data.applications_count || 0;
   // Of the applications that have moved past "pending", how many went forward.
