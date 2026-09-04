@@ -44,6 +44,18 @@ if [ "$LISTENING" != "1" ]; then
     exit 1
 fi
 
+# Render (like most PaaS) announces the port the router will talk to via
+# $PORT. nginx.conf listens on 80; add the platform's port as a second listener
+# when it differs, so the health check and the router reach us either way
+# instead of the deploy timing out and being rolled back.
+PORT="${PORT:-80}"
+if [ "$PORT" != "80" ]; then
+    echo "==> Adding nginx listener on port $PORT"
+    # Two directives on one line is valid nginx, and a plain literal
+    # substitution keeps this free of backreferences and embedded newlines.
+    sed -i "s|listen 80;|listen 80; listen ${PORT};|" /etc/nginx/nginx.conf
+fi
+
 echo "==> Starting nginx..."
 nginx
 

@@ -38,7 +38,7 @@ def home(request):
     with their correct MIME types; everything else receives index.html so
     React Router can handle the route (SPA fallback).
     """
-    frontend_dist = os.path.join(settings.BASE_DIR, "frontend", "dist")
+    frontend_dist = str(settings.FRONTEND_DIST_DIR)
     index_file = os.path.join(frontend_dist, "index.html")
     if os.path.exists(index_file):
         # Serve an actual build asset (e.g. /assets/index-<hash>.js) if present.
@@ -60,8 +60,22 @@ def home(request):
                 _index_cache["content"] = f.read()
             _index_cache["mtime"] = mtime
         return HttpResponse(_index_cache["content"], content_type="text/html")
-    # Fallback while React is being built
-    return render(request, "home.html")
+    # Fallback while React is being built. The legacy template reverses URL
+    # names (job_list, register_recruiter) that the API-first urls.py no longer
+    # routes, so rendering it raises NoReverseMatch -> a 500 on every page.
+    # Never let the fallback be worse than the problem it reports.
+    try:
+        return render(request, "home.html")
+    except Exception:
+        logger.exception("home.html fallback failed to render")
+        return HttpResponse(
+            "<!doctype html><meta charset='utf-8'>"
+            "<title>PortAL</title>"
+            "<h1>PortAL is starting up</h1>"
+            "<p>The frontend build was not found on the server "
+            f"(looked in <code>{frontend_dist}</code>).</p>",
+            content_type="text/html",
+        )
 
 
 def api_health(request):

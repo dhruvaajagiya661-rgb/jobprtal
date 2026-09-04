@@ -15,6 +15,12 @@ backend/media
 .env
 .env.local
 .env.production
+# settings.py does load_dotenv(BASE_DIR/".env", override=True), so a stray
+# backend/.env baked into the image silently OVERRIDES the platform's
+# environment variables (it currently carries DEBUG=True and
+# SECURE_SSL_REDIRECT=True). Keep it out of the build context.
+backend/.env
+backend/.env.*
 *.md
 !README.md
 test_*.py

@@ -26,11 +26,23 @@ if not DEBUG and SECRET_KEY == INSECURE_SECRET_KEY:
         'get_random_secret_key as k; print(k())"'
     )
 
-ALLOWED_HOSTS = (
-    os.getenv("ALLOWED_HOSTS", "").split(",")
-    if os.getenv("ALLOWED_HOSTS")
-    else ["localhost", "127.0.0.1"]
-)
+ALLOWED_HOSTS = [
+    h.strip()
+    for h in (
+        os.getenv("ALLOWED_HOSTS", "").split(",")
+        if os.getenv("ALLOWED_HOSTS")
+        else ["localhost", "127.0.0.1"]
+    )
+    if h.strip()
+]
+
+# Render injects the service's public hostname into every instance. Trust it
+# automatically: otherwise a deploy answers every request with 400
+# DisallowedHost simply because nobody re-typed the host into ALLOWED_HOSTS
+# after creating (or renaming) the service.
+RENDER_EXTERNAL_HOSTNAME = os.getenv("RENDER_EXTERNAL_HOSTNAME", "").strip()
+if RENDER_EXTERNAL_HOSTNAME and RENDER_EXTERNAL_HOSTNAME not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
 
 if not DEBUG:
     # Production always sits behind a TLS-terminating proxy (Render's load
@@ -63,15 +75,32 @@ SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_BROWSER_XSS_FILTER = True
 SESSION_COOKIE_SECURE = not DEBUG
 CSRF_COOKIE_SECURE = not DEBUG
-CSRF_TRUSTED_ORIGINS = os.getenv(
-    "CSRF_TRUSTED_ORIGINS", "http://localhost:5173,http://localhost:8000"
-).split(",")
+CSRF_TRUSTED_ORIGINS = [
+    o.strip()
+    for o in os.getenv(
+        "CSRF_TRUSTED_ORIGINS", "http://localhost:5173,http://localhost:8000"
+    ).split(",")
+    if o.strip()
+]
 SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
 
 # CORS settings
-CORS_ALLOWED_ORIGINS = os.getenv(
-    "CORS_ALLOWED_ORIGINS", "http://localhost:5173,http://localhost:8000"
-).split(",")
+CORS_ALLOWED_ORIGINS = [
+    o.strip()
+    for o in os.getenv(
+        "CORS_ALLOWED_ORIGINS", "http://localhost:5173,http://localhost:8000"
+    ).split(",")
+    if o.strip()
+]
+
+# Same reasoning as ALLOWED_HOSTS: the SPA is served from the Render hostname,
+# so that origin has to be trusted for logins (CSRF) and for XHR (CORS).
+if RENDER_EXTERNAL_HOSTNAME:
+    _render_origin = f"https://{RENDER_EXTERNAL_HOSTNAME}"
+    if _render_origin not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append(_render_origin)
+    if _render_origin not in CORS_ALLOWED_ORIGINS:
+        CORS_ALLOWED_ORIGINS.append(_render_origin)
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_ALL_ORIGINS = DEBUG  # Allow all origins in dev for convenience
 
@@ -345,6 +374,15 @@ LANGUAGE_CODE = "en-us"
 TIME_ZONE = "UTC"
 USE_I18N = True
 USE_TZ = True
+
+# Vite build output. `frontend/` is a sibling of `backend/` both in the repo
+# and in the Docker image (/app/frontend/dist next to /app/backend), so it sits
+# one level ABOVE BASE_DIR. Joining it onto BASE_DIR instead pointed at
+# backend/frontend/dist, which has never existed, so every SPA route fell
+# through to the legacy Django template.
+FRONTEND_DIST_DIR = os.getenv(
+    "FRONTEND_DIST_DIR", os.path.join(BASE_DIR.parent, "frontend", "dist")
+)
 
 STATIC_URL = "static/"
 STATICFILES_DIRS = [os.path.join(BASE_DIR, "static")]

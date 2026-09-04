@@ -71,12 +71,12 @@ COPY --from=frontend-build /app/frontend/dist /app/frontend/dist
 # Copy nginx config
 COPY nginx.conf /etc/nginx/nginx.conf
 
-# Collect Django static files (DEBUG=True and a dummy SECRET_KEY are only
-# needed at build time so collectstatic can import settings without error;
-# the real values come from docker-compose environment at runtime).
-ENV DEBUG=True
-ENV SECRET_KEY=build-time-placeholder
-RUN cd /app/backend && python manage.py collectstatic --noinput
+# Collect Django static files. DEBUG/SECRET_KEY are only needed so that
+# collectstatic can import settings without error, so they are scoped to this
+# single RUN. Declaring them with ENV would bake them into the final image and
+# every deployment that does not set DEBUG itself would then run production in
+# debug mode (tracebacks public, CORS wide open, sqlite instead of Postgres).
+RUN cd /app/backend && DEBUG=True SECRET_KEY=build-time-placeholder python manage.py collectstatic --noinput
 
 # Create non-root user for Django
 RUN addgroup --system --gid 1001 appgroup && \
