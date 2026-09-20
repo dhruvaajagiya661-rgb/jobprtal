@@ -9,6 +9,7 @@ import React, {
 } from 'react';
 import { notificationsAPI } from '../api/client';
 import { useAuth } from './AuthContext';
+import { wsBaseUrl } from '../config/api';
 
 interface IncomingNotification {
   title?: string;
@@ -99,7 +100,7 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({
 
       const proto = window.location.protocol === 'https:' ? 'wss' : 'ws';
       const ws = new WebSocket(
-        `${proto}://${window.location.host}/ws/notifications/?token=${token}`
+        `${wsBaseUrl() || `${proto}://${window.location.host}`}/ws/notifications/?token=${token}`
       );
       socketRef.current = ws;
 

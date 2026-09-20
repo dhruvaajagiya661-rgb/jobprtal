@@ -3,6 +3,7 @@ import { adminAPI } from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
 import { extractApiError } from '../../utils/errors';
 import useSeo from '../../hooks/useSeo';
+import { mediaUrl } from '../../utils/mediaUrl';
 
 /* ─────────────────────────── Types ─────────────────────────── */
 
@@ -404,7 +405,7 @@ const studentColumns: Column<Student>[] = [
   {
     key: 'resume', label: 'Resume', value: s => s.resume,
     render: s => s.resume
-      ? <a href={s.resume} target="_blank" rel="noopener noreferrer" className="text-primary-600 hover:underline text-xs font-medium">View</a>
+      ? <a href={mediaUrl(s.resume) ?? s.resume} target="_blank" rel="noopener noreferrer" className="text-primary-600 hover:underline text-xs font-medium">View</a>
       : <span className="text-surface-300">—</span>,
   },
   {
@@ -496,7 +497,7 @@ const applicationColumns: Column<Application>[] = [
   {
     key: 'resume', label: 'Resume', value: a => a.resume,
     render: a => a.resume
-      ? <a href={a.resume} target="_blank" rel="noopener noreferrer" className="text-primary-600 hover:underline text-xs font-medium">View</a>
+      ? <a href={mediaUrl(a.resume) ?? a.resume} target="_blank" rel="noopener noreferrer" className="text-primary-600 hover:underline text-xs font-medium">View</a>
       : <span className="text-surface-300">—</span>,
   },
 ];

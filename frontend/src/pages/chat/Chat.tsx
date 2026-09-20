@@ -4,6 +4,7 @@ import { chatAPI, publicProfileAPI, refreshTokenIfNeeded } from '../../api/clien
 import { useAuth } from '../../context/AuthContext';
 import { extractApiError } from '../../utils/errors';
 import { useToast } from '../../context/ToastContext';
+import { wsBaseUrl } from '../../config/api';
 
 interface Conversation {
   partner_id: number;
@@ -174,7 +175,7 @@ const Chat: React.FC = () => {
           if (fresh) token = fresh;
         } catch { /* fall through with the stored token */ }
         const s = new WebSocket(
-          `${wsBase}://${window.location.host}/ws/chat/${room}/?token=${encodeURIComponent(token)}`
+          `${wsBaseUrl() || `${wsBase}://${window.location.host}`}/ws/chat/${room}/?token=${encodeURIComponent(token)}`
         );
         socket = s;
         setSocketState('connecting');

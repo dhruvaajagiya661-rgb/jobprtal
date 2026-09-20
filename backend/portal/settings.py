@@ -164,6 +164,25 @@ AUTHENTICATION_BACKENDS = [
 
 ROOT_URLCONF = "portal.urls"
 
+# Vercel deployment support: detect Vercel external hostname
+VERCEL_EXTERNAL_HOSTNAME = os.getenv("VERCEL_EXTERNAL_HOSTNAME", "").strip()
+if VERCEL_EXTERNAL_HOSTNAME and VERCEL_EXTERNAL_HOSTNAME not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append(VERCEL_EXTERNAL_HOSTNAME)
+if VERCEL_EXTERNAL_HOSTNAME:
+    _vercel_origin = f"https://{VERCEL_EXTERNAL_HOSTNAME}"
+    if _vercel_origin not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append(_vercel_origin)
+    if _vercel_origin not in CORS_ALLOWED_ORIGINS:
+        CORS_ALLOWED_ORIGINS.append(_vercel_origin)
+
+# The SPA lives on Vercel, which assigns a subdomain per project (and a new
+# one per preview build), so an exact-origin list would need editing on every
+# redeploy. Trust any *.vercel.app origin instead: the API answers JSON, never
+# user-generated HTML, so a forged Host header gains an attacker nothing.
+CORS_ALLOWED_ORIGIN_REGEXES = [r"^https://[a-z0-9-]+\.vercel\.app$"]
+# Django's CSRF checker accepts wildcard subdomains natively (since 4.0).
+CSRF_TRUSTED_ORIGINS.append("https://*.vercel.app")
+
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
