@@ -39,12 +39,13 @@ class HealthCheckView(View):
         env_status = self._check_environment()
         health["checks"]["environment"] = env_status
 
-        # Determine overall status
-        all_healthy = all(
-            check["status"] == "ok" for check in health["checks"].values()
-        )
-
-        if not all_healthy:
+        # Only the database decides the status code. Render treats any non-2xx
+        # from a configured health-check path as a failed deploy and rolls back
+        # to the previous instance, so a degraded cache (Redis restarting, or
+        # REDIS_URL pointing somewhere unreachable) or an unset optional env
+        # var must not take the whole deployment down — those are reported
+        # inside "checks" for the operator to read instead.
+        if health["checks"]["database"]["status"] != "ok":
             health["status"] = "unhealthy"
             return JsonResponse(health, status=503)
 
@@ -89,7 +90,9 @@ class HealthCheckView(View):
 
     def _check_environment(self):
         """Check critical environment variables."""
-        required_vars = ["SECRET_KEY", "DEBUG"]
+        # DEBUG is deliberately absent: settings.py defaults it to False, so an
+        # unset var is not a misconfiguration worth failing a health check for.
+        required_vars = ["SECRET_KEY"]
         missing = [v for v in required_vars if not os.getenv(v)]
         if missing:
             return {

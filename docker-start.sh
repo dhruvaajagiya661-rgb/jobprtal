@@ -3,6 +3,20 @@ set -e
 
 echo "==> Starting PortAL..."
 
+# Report which deployment settings actually arrived on this instance. Names
+# only — never values — because a missing SECRET_KEY, DB_HOST or DATABASE_URL
+# is the difference between a working deploy and one that Render silently
+# rolls back to the previous (older) image, which is very hard to spot from
+# the outside.
+echo "==> Environment (set/missing):"
+for VAR in SECRET_KEY DEBUG DATABASE_URL DB_HOST DB_NAME REDIS_URL SITE_URL; do
+    if [ -n "$(printenv "$VAR")" ]; then
+        echo "    $VAR = set"
+    else
+        echo "    $VAR = MISSING"
+    fi
+done
+
 # Run Django migrations and collectstatic
 echo "==> Running database migrations..."
 cd /app/backend
@@ -10,6 +24,12 @@ python manage.py migrate --noinput 2>&1 || echo "WARN: Migration failed (DB may 
 
 echo "==> Collecting static files..."
 python manage.py collectstatic --noinput 2>&1 || true
+
+# Fail visibly (with the reason) rather than with nginx's bare 502 page: this
+# prints any configuration error — missing SECRET_KEY, unusable database —
+# straight into the Render log while the container is still starting.
+echo "==> Checking Django configuration..."
+python manage.py check 2>&1 || echo "WARN: manage.py check reported problems (see above)"
 
 # Start Daphne first, in the background. Daphne serves both HTTP (the Django
 # ASGI app behind nginx) and the Channels websockets on /ws/, and it is a
@@ -57,6 +77,12 @@ if [ "$PORT" != "80" ]; then
 fi
 
 echo "==> Starting nginx..."
+# Validate the config first: on a syntax error nginx exits non-zero and, with
+# `set -e`, the container would die with no explanation in the log.
+if ! nginx -t 2>&1; then
+    echo "ERROR: nginx configuration test failed — aborting startup"
+    exit 1
+fi
 nginx
 
 # Keep the container alive while Daphne runs; stop nginx cleanly on exit.

@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 from datetime import timedelta
+from urllib.parse import parse_qs, unquote, urlparse
 
 from django.core.exceptions import ImproperlyConfigured
 
@@ -272,11 +273,34 @@ else:
 # Allow overriding the DB engine via env (use 'django.db.backends.sqlite3' for local dev without PostgreSQL)
 DB_ENGINE = os.getenv("DB_ENGINE", "django.db.backends.postgresql")
 
+# Hosting platforms hand the database over as a single connection URL
+# (postgresql://user:pass@host:5432/name) rather than five DB_* variables, so
+# accept that too. It is used only when DB_HOST is not set explicitly, so an
+# existing DB_* configuration keeps working unchanged — without this, a deploy
+# that set only DATABASE_URL silently pointed at localhost, where migrations
+# failed and every query answered 500.
+DATABASE_URL = os.getenv("DATABASE_URL", "").strip()
+
 if DB_ENGINE == "django.db.backends.sqlite3":
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.sqlite3",
             "NAME": BASE_DIR / "db.sqlite3",
+        }
+    }
+elif DATABASE_URL and not os.getenv("DB_HOST"):
+    _db_url = urlparse(DATABASE_URL)
+    DATABASES = {
+        "default": {
+            "ENGINE": DB_ENGINE,
+            "NAME": unquote(_db_url.path.lstrip("/")) or "portal_db",
+            "USER": unquote(_db_url.username or "postgres"),
+            "PASSWORD": unquote(_db_url.password or ""),
+            "HOST": _db_url.hostname or "localhost",
+            "PORT": str(_db_url.port or 5432),
+            "OPTIONS": {
+                "sslmode": parse_qs(_db_url.query).get("sslmode", ["prefer"])[0],
+            },
         }
     }
 else:
