@@ -1,0 +1,46 @@
+# Render Blueprint for PortAL (Django + Daphne + nginx, single container).
+#
+# Existing services do not automatically adopt this file — it documents the
+# correct configuration and lets you recreate the service from the blueprint
+# (Render dashboard → New → Blueprint) if the current one drifts again.
+#
+# The redirect-loop outage (every URL answering 301 to itself) came from an old
+# image with SECURE_SSL_REDIRECT enabled behind Render's TLS-terminating proxy.
+# settings.py now hard-disables SECURE_SSL_REDIRECT in production, so any
+# deploy of the current code resolves it. Keep the env vars below exactly as
+# listed; the secrets are deliberately marked sync: false so they are entered
+# once in the Render dashboard and never stored in git.
+services:
+  - type: web
+    name: portal-web
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    healthCheckPath: /health/
+    autoDeploy: true
+    envVars:
+      # --- Django core ---
+      - key: DEBUG
+        value: "False"
+      - key: SECRET_KEY
+        sync: false
+      - key: ALLOWED_HOSTS
+        value: portal-web-1f60.onrender.com
+      - key: SITE_URL
+        value: https://jobprtal-1.vercel.app
+      # --- Database (Neon, pooled connection string) ---
+      # Value = the Neon -pooler URL; paste it in the dashboard, not in git.
+      - key: DATABASE_URL
+        sync: false
+      # --- Frontend/origins ---
+      - key: CORS_ALLOWED_ORIGINS
+        value: https://jobprtal-1.vercel.app,http://localhost:5173,http://localhost:8000
+      - key: CSRF_TRUSTED_ORIGINS
+        value: https://jobprtal-1.vercel.app,http://localhost:5173,http://localhost:8000
+      # --- Optional: Redis for cache/websockets across instances ---
+      # Single-instance deploys work without it (LocMem cache + in-memory
+      # channel layer); set it only when you add a Render Redis instance.
+      - key: REDIS_URL
+        sync: false
+      - key: BUILD_VERSION
+        value: "1.0.1"

@@ -17,10 +17,25 @@ for VAR in SECRET_KEY DEBUG DATABASE_URL DB_HOST DB_NAME REDIS_URL SITE_URL; do
     fi
 done
 
-# Run Django migrations and collectstatic
+# Run Django migrations and collectstatic. Neon (serverless Postgres) can
+# return connections slowly right after autosuspend, and a failed migration on
+# first boot means the API comes up with a missing schema, so retry instead of
+# continuing on the first failure.
 echo "==> Running database migrations..."
 cd /app/backend
-python manage.py migrate --noinput 2>&1 || echo "WARN: Migration failed (DB may not be ready yet)"
+MIGRATION_OK=0
+for ATTEMPT in 1 2 3 4 5; do
+    if python manage.py migrate --noinput 2>&1; then
+        MIGRATION_OK=1
+        break
+    fi
+    echo "WARN: migrate attempt $ATTEMPT failed — retrying in 5s (DB may be cold-starting)"
+    sleep 5
+done
+if [ "$MIGRATION_OK" != "1" ]; then
+    echo "ERROR: migrations failed after 5 attempts — aborting startup"
+    exit 1
+fi
 
 echo "==> Collecting static files..."
 python manage.py collectstatic --noinput 2>&1 || true
