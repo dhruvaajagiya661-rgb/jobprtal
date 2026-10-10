@@ -195,7 +195,14 @@ class CORSCustomHeaders:
 
         # Only add CSP in production
         if not settings.DEBUG:
-            response["Content-Security-Policy"] = "default-src 'self'"
+            response["Content-Security-Policy"] = (
+                "default-src 'self'; "
+                "script-src 'self' https://unpkg.com https://cdn.jsdelivr.net; "
+                "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com; "
+                "font-src 'self' https://fonts.gstatic.com; "
+                "img-src 'self' data: https:; "
+                "connect-src 'self' https://portal-web-1f60.onrender.com wss://portal-web-1f60.onrender.com"
+            )
 
         return response
 
